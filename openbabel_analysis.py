@@ -650,7 +650,8 @@ class MoleculeHandler:
                         line=dict(width=0.5, color='#888'),
                         hoverinfo='none',
                         mode='lines',
-                        name='Bonds'
+                        name='Bonds',
+                        showlegend=False
                     ),
                     row=1, col=2
                 )
@@ -674,13 +675,14 @@ class MoleculeHandler:
                         x=node_x, y=node_y,
                         mode='markers+text',
                         marker=dict(
-                            size=20,
+                            size=10,
                             color=node_color,
-                            line_width=2
+                            line_width=1
                         ),
                         text=node_text,
                         textposition="top center",
-                        name='Atoms'
+                        name='Atoms',
+                        showlegend=False
                     ),
                     row=1, col=2
                 )
@@ -777,8 +779,12 @@ def run_openbabel_analysis(input_format='smiles', data=None, **kwargs):
     try:
         # Validate input data
         if not data or data.strip() == '':
-            # If no data provided, use an example molecule
-            data = 'CC(=O)O'  # Acetic acid
+            # If no data provided, use example molecules
+            examples = {
+                'acetic_acid': 'CC(=O)O',  # Acetic acid
+                'cumic_acid': 'CC(C)C1=CC=C(C=C1)C(=O)O'  # Cumic acid
+            }
+            data = examples['cumic_acid']  # Using cumic acid as default
             print(f"No input provided. Using example molecule: {data}")
             
         print(f"Starting OpenBabel analysis with format: {input_format}")
