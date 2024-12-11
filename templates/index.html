@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Simulations</title>
+    <title>NanoSimulations</title>
+    <meta name="description" content="Interactive simulations for nanoscale physics and materials">
+    <meta name="keywords" content="nanosimulations, quantum mechanics, electromagnetic fields, battery materials">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='nanosim.svg') }}">
+    <link rel="alternate icon" href="{{ url_for('static', filename='nanosim.ico') }}" type="image/x-icon">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body {
@@ -72,16 +76,22 @@
     </style>
 </head>
 <body>
-    <h1>Physics Simulations</h1>
+    <h1>NanoSimulations</h1>
     
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('classical')">Classical Orbital</div>
+        <div class="tab active" onclick="switchTab('classical')">Electromagnetic Trajectory</div>
         <div class="tab" onclick="switchTab('quantum')">Quantum Orbital</div>
+        <div class="tab" onclick="switchTab('semiclassical')">Semi-Classical</div>
         <div class="tab" onclick="switchTab('double-slit')">Double Slit</div>
+        <div class="tab" onclick="switchTab('pic')">PIC Simulation</div>
+        <div class="tab" onclick="switchTab('shape')">Shape Optimization</div>
         <div class="tab" onclick="switchTab('battery')">Battery Simulation</div>
+        <div class="tab" onclick="switchTab('qutip')">QuTiP Dynamics</div>
+        <div class="tab" onclick="switchTab('ase')">Atomistic Simulation</div>
+        <div class="tab" onclick="switchTab('pyvista')">Nanoparticle Visualization</div>
     </div>
 
-    <!-- Classical Orbital Simulation -->
+    <!-- Electromagnetic Trajectory Simulation -->
     <div id="classical-container" class="container">
         <div class="controls">
             <form id="simulation-form">
@@ -92,19 +102,6 @@
                 <div class="form-group">
                     <label>Charge (C):</label>
                     <input type="number" id="charge" value="1.6e-19" step="1e-20">
-                </div>
-                <h3>Initial Position (m)</h3>
-                <div class="form-group">
-                    <label>X:</label>
-                    <input type="number" id="pos-x" value="0" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>Y:</label>
-                    <input type="number" id="pos-y" value="0" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>Z:</label>
-                    <input type="number" id="pos-z" value="0" step="0.1">
                 </div>
                 <h3>Initial Velocity (m/s)</h3>
                 <div class="form-group">
@@ -132,7 +129,7 @@
                     <label>Z:</label>
                     <input type="number" id="mag-z" value="1" step="0.1">
                 </div>
-                <button type="submit">Run Classical Simulation</button>
+                <button type="submit">Run Trajectory Simulation</button>
             </form>
         </div>
         <div id="classical-plot" class="plot"></div>
@@ -176,6 +173,32 @@
         <div id="quantum-plot" class="plot"></div>
     </div>
 
+    <!-- Semi-Classical Simulation -->
+    <div id="semiclassical-container" class="container" style="display: none;">
+        <div class="controls">
+            <form id="semiclassical-form">
+                <div class="form-group">
+                    <label>Particle Mass (kg):</label>
+                    <input type="number" id="semiclassical-mass" value="9.1093837015e-31" step="1e-32">
+                </div>
+                <div class="form-group">
+                    <label>Energy (eV):</label>
+                    <input type="number" id="semiclassical-energy" value="1.0" min="0.1" max="10.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Potential Type:</label>
+                    <select id="potential-type">
+                        <option value="barrier">Potential Barrier</option>
+                        <option value="well">Potential Well</option>
+                        <option value="harmonic">Harmonic Oscillator</option>
+                    </select>
+                </div>
+                <button type="submit">Run Semi-Classical Simulation</button>
+            </form>
+        </div>
+        <div id="semiclassical-plot" class="plot"></div>
+    </div>
+
     <!-- Double Slit Simulation -->
     <div id="double-slit-container" class="container" style="display: none;">
         <div class="controls">
@@ -198,13 +221,61 @@
         <div id="double-slit-plot" class="plot"></div>
     </div>
 
+    <!-- PIC Simulation -->
+    <div id="pic-container" class="container" style="display: none;">
+        <div class="controls">
+            <form id="pic-form">
+                <div class="form-group">
+                    <label>Number of Particles:</label>
+                    <input type="number" id="n-particles" value="1000" min="100" max="10000" step="100">
+                </div>
+                <div class="form-group">
+                    <label>Number of Steps:</label>
+                    <input type="number" id="n-steps" value="100" min="10" max="1000" step="10">
+                </div>
+                <div class="form-group">
+                    <label>Grid Size X:</label>
+                    <input type="number" id="nx" value="100" min="50" max="200" step="10">
+                </div>
+                <div class="form-group">
+                    <label>Grid Size Y:</label>
+                    <input type="number" id="ny" value="100" min="50" max="200" step="10">
+                </div>
+                <div class="form-group">
+                    <label>Time Step (ps):</label>
+                    <input type="number" id="dt" value="1" min="0.1" max="10" step="0.1">
+                </div>
+                <button type="submit">Run PIC Simulation</button>
+            </form>
+        </div>
+        <div id="pic-plot" class="plot"></div>
+    </div>
+
+    <!-- Shape Optimization -->
+    <div id="shape-container" class="container" style="display: none;">
+        <div class="controls">
+            <form id="shape-form">
+                <div class="form-group">
+                    <label>Mesh Resolution:</label>
+                    <input type="number" id="resolution" value="50" min="20" max="100" step="5">
+                </div>
+                <div class="form-group">
+                    <label>Maximum Iterations:</label>
+                    <input type="number" id="max-iter" value="50" min="10" max="200" step="10">
+                </div>
+                <button type="submit">Run Shape Optimization</button>
+            </form>
+        </div>
+        <div id="shape-plot" class="plot"></div>
+    </div>
+
     <!-- Battery Simulation -->
     <div id="battery-container" class="container" style="display: none;">
         <div class="controls">
             <form id="battery-form">
                 <div class="form-group">
                     <label>Initial Capacity (mAh/g):</label>
-                    <input type="number" id="initial-capacity" value="900" min="100" max="2000" step="10">
+                    <input type="number" id="initial-capacity" value="900" min="100" max="2000" step="50">
                 </div>
                 <div class="form-group">
                     <label>Number of Cycles:</label>
@@ -216,19 +287,66 @@
         <div id="battery-plot" class="plot"></div>
     </div>
 
+    <!-- QuTiP Simulation -->
+    <div id="qutip-container" class="container" style="display: none;">
+        <div class="controls">
+            <form id="qutip-form">
+                <div class="form-group">
+                    <label>Number of Energy Levels:</label>
+                    <input type="number" id="n-levels" value="3" min="2" max="10" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Decay Rate (γ):</label>
+                    <input type="number" id="gamma" value="0.1" min="0.01" max="1.0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Rabi Frequency (Ω):</label>
+                    <input type="number" id="omega" value="1.0" min="0.1" max="5.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Simulation Time:</label>
+                    <input type="number" id="t-max" value="10.0" min="1.0" max="50.0" step="1.0">
+                </div>
+                <div class="form-group">
+                    <label>Time Steps:</label>
+                    <input type="number" id="n-steps" value="200" min="50" max="1000" step="50">
+                </div>
+                <button type="submit">Run QuTiP Simulation</button>
+            </form>
+        </div>
+        <div id="qutip-plot" class="plot"></div>
+    </div>
+
+    {% include 'ase.html' %}
+
+    {% include 'pyvista.html' %}
+
     <script>
+        async function loadQutipContainer() {
+            const response = await fetch('/qutip_template');
+            const html = await response.text();
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            document.body.insertBefore(container, document.querySelector('script'));
+        }
+
+        // Load QuTiP container when the page loads
+        loadQutipContainer();
+
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`.tab:nth-child(${
                 tab === 'classical' ? 1 : 
                 (tab === 'quantum' ? 2 : 
-                (tab === 'double-slit' ? 3 : 4))
+                (tab === 'semiclassical' ? 3 :
+                (tab === 'double-slit' ? 4 :
+                (tab === 'pic' ? 5 :
+                (tab === 'shape' ? 6 :
+                (tab === 'battery' ? 7 : 8))))))
             })`).classList.add('active');
             
-            document.getElementById('classical-container').style.display = tab === 'classical' ? 'grid' : 'none';
-            document.getElementById('quantum-container').style.display = tab === 'quantum' ? 'grid' : 'none';
-            document.getElementById('double-slit-container').style.display = tab === 'double-slit' ? 'grid' : 'none';
-            document.getElementById('battery-container').style.display = tab === 'battery' ? 'grid' : 'none';
+            document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
+            document.getElementById(`${tab}-container`).style.display = 'grid';
         }
 
         document.getElementById('simulation-form').addEventListener('submit', async (e) => {
@@ -237,11 +355,7 @@
             const data = {
                 mass: parseFloat(document.getElementById('mass').value),
                 charge: parseFloat(document.getElementById('charge').value),
-                initial_position: [
-                    parseFloat(document.getElementById('pos-x').value),
-                    parseFloat(document.getElementById('pos-y').value),
-                    parseFloat(document.getElementById('pos-z').value)
-                ],
+                initial_position: [0, 0, 0],  // Fixed initial position at origin
                 initial_velocity: [
                     parseFloat(document.getElementById('vel-x').value),
                     parseFloat(document.getElementById('vel-y').value),
@@ -333,6 +447,105 @@
             const result = await response.json();
             const plotData = JSON.parse(result.plot);
             Plotly.newPlot('battery-plot', plotData.data, plotData.layout);
+        });
+
+        document.getElementById('semiclassical-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                mass: parseFloat(document.getElementById('semiclassical-mass').value),
+                energy: parseFloat(document.getElementById('semiclassical-energy').value),
+                potential_type: document.getElementById('potential-type').value
+            };
+
+            const response = await fetch('/semiclassical', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('semiclassical-plot', plotData.data, plotData.layout);
+        });
+
+        document.getElementById('pic-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                n_particles: parseInt(document.getElementById('n-particles').value),
+                n_steps: parseInt(document.getElementById('n-steps').value),
+                nx: parseInt(document.getElementById('nx').value),
+                ny: parseInt(document.getElementById('ny').value),
+                dt: parseFloat(document.getElementById('dt').value) * 1e-12  // Convert ps to seconds
+            };
+
+            const response = await fetch('/pic', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('pic-plot', plotData.data, plotData.layout);
+        });
+
+        document.getElementById('shape-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                resolution: parseInt(document.getElementById('resolution').value),
+                max_iter: parseInt(document.getElementById('max-iter').value)
+            };
+
+            const response = await fetch('/optimize_shape', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('shape-plot', plotData.data, plotData.layout);
+        });
+
+        document.getElementById('qutip-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                n_levels: parseInt(document.getElementById('n-levels').value),
+                gamma: parseFloat(document.getElementById('gamma').value),
+                omega: parseFloat(document.getElementById('omega').value),
+                t_max: parseFloat(document.getElementById('t-max').value),
+                n_steps: parseInt(document.getElementById('n-steps').value)
+            };
+
+            try {
+                const response = await fetch('/qutip', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.error) {
+                    console.error('QuTiP simulation error:', result.error);
+                    return;
+                }
+                const plotData = JSON.parse(result.plot);
+                Plotly.newPlot('qutip-plot', plotData.data, plotData.layout);
+            } catch (error) {
+                console.error('Error running QuTiP simulation:', error);
+            }
         });
     </script>
 </body>

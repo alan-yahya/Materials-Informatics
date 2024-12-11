@@ -1,0 +1,174 @@
+<!-- PyVista Visualization -->
+<div id="pyvista-container" class="container" style="display: none;">
+    <div class="controls">
+        <form id="pyvista-form">
+            <div class="form-group">
+                <label>Particle Type:</label>
+                <select id="particle-type" onchange="updateParticleParams()">
+                    <option value="sphere">Sphere</option>
+                    <option value="rod">Nanorod</option>
+                    <option value="cube">Cube</option>
+                    <option value="core-shell">Core-Shell</option>
+                </select>
+            </div>
+
+            <!-- Sphere Parameters -->
+            <div id="sphere-params">
+                <div class="form-group">
+                    <label>Radius (nm):</label>
+                    <input type="number" id="sphere-radius" value="10" min="1" max="50" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Resolution:</label>
+                    <input type="number" id="sphere-resolution" value="30" min="10" max="100" step="5">
+                </div>
+            </div>
+
+            <!-- Rod Parameters -->
+            <div id="rod-params" style="display: none;">
+                <div class="form-group">
+                    <label>Length (nm):</label>
+                    <input type="number" id="rod-length" value="20" min="5" max="100" step="5">
+                </div>
+                <div class="form-group">
+                    <label>Radius (nm):</label>
+                    <input type="number" id="rod-radius" value="5" min="1" max="20" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Resolution:</label>
+                    <input type="number" id="rod-resolution" value="30" min="10" max="100" step="5">
+                </div>
+            </div>
+
+            <!-- Cube Parameters -->
+            <div id="cube-params" style="display: none;">
+                <div class="form-group">
+                    <label>Size (nm):</label>
+                    <input type="number" id="cube-size" value="10" min="1" max="50" step="1">
+                </div>
+            </div>
+
+            <!-- Core-Shell Parameters -->
+            <div id="core-shell-params" style="display: none;">
+                <div class="form-group">
+                    <label>Core Radius (nm):</label>
+                    <input type="number" id="core-radius" value="8" min="1" max="30" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Shell Thickness (nm):</label>
+                    <input type="number" id="shell-thickness" value="2" min="0.5" max="10" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>Resolution:</label>
+                    <input type="number" id="shell-resolution" value="30" min="10" max="100" step="5">
+                </div>
+            </div>
+
+            <!-- Surface Ligands -->
+            <div class="form-group">
+                <label>Add Surface Ligands:</label>
+                <input type="checkbox" id="add-ligands" onchange="toggleLigandParams()">
+            </div>
+
+            <div id="ligand-params" style="display: none;">
+                <div class="form-group">
+                    <label>Number of Ligands:</label>
+                    <input type="number" id="n-ligands" value="10" min="1" max="50" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Ligand Length (nm):</label>
+                    <input type="number" id="ligand-length" value="2" min="0.5" max="10" step="0.5">
+                </div>
+            </div>
+
+            <button type="submit">Visualize Nanoparticle</button>
+        </form>
+    </div>
+    <div id="pyvista-plot" class="plot"></div>
+</div>
+
+<script>
+function updateParticleParams() {
+    const particleType = document.getElementById('particle-type').value;
+    
+    // Hide all parameter sections
+    document.getElementById('sphere-params').style.display = 'none';
+    document.getElementById('rod-params').style.display = 'none';
+    document.getElementById('cube-params').style.display = 'none';
+    document.getElementById('core-shell-params').style.display = 'none';
+    
+    // Show selected parameter section
+    if (particleType === 'sphere') {
+        document.getElementById('sphere-params').style.display = 'block';
+    } else if (particleType === 'rod') {
+        document.getElementById('rod-params').style.display = 'block';
+    } else if (particleType === 'cube') {
+        document.getElementById('cube-params').style.display = 'block';
+    } else if (particleType === 'core-shell') {
+        document.getElementById('core-shell-params').style.display = 'block';
+    }
+}
+
+function toggleLigandParams() {
+    const addLigands = document.getElementById('add-ligands').checked;
+    document.getElementById('ligand-params').style.display = addLigands ? 'block' : 'none';
+}
+
+document.getElementById('pyvista-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const particleType = document.getElementById('particle-type').value;
+    const addLigands = document.getElementById('add-ligands').checked;
+    
+    let data = {
+        particle_type: particleType,
+        add_ligands: addLigands
+    };
+    
+    // Add particle-specific parameters
+    if (particleType === 'sphere') {
+        data.radius = parseFloat(document.getElementById('sphere-radius').value);
+        data.resolution = parseInt(document.getElementById('sphere-resolution').value);
+    } else if (particleType === 'rod') {
+        data.length = parseFloat(document.getElementById('rod-length').value);
+        data.radius = parseFloat(document.getElementById('rod-radius').value);
+        data.resolution = parseInt(document.getElementById('rod-resolution').value);
+    } else if (particleType === 'cube') {
+        data.size = parseFloat(document.getElementById('cube-size').value);
+    } else if (particleType === 'core-shell') {
+        data.core_radius = parseFloat(document.getElementById('core-radius').value);
+        data.shell_thickness = parseFloat(document.getElementById('shell-thickness').value);
+        data.resolution = parseInt(document.getElementById('shell-resolution').value);
+    }
+    
+    // Add ligand parameters if enabled
+    if (addLigands) {
+        data.n_ligands = parseInt(document.getElementById('n-ligands').value);
+        data.ligand_length = parseFloat(document.getElementById('ligand-length').value);
+    }
+
+    try {
+        const response = await fetch('/pyvista', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.error) {
+            console.error('PyVista visualization error:', result.error);
+            return;
+        }
+        const plotData = JSON.parse(result.plot);
+        Plotly.newPlot('pyvista-plot', plotData.data, plotData.layout);
+    } catch (error) {
+        console.error('Error running PyVista visualization:', error);
+    }
+});
+
+// Initialize parameter visibility
+updateParticleParams();
+toggleLigandParams();
+</script> 
