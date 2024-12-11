@@ -75,6 +75,42 @@
     <div id="openbabel-plot" class="plot"></div>
 </div>
 
+<style>
+.examples {
+    margin-top: 10px;
+}
+
+.examples button {
+    margin-right: 10px;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.examples button:hover {
+    background-color: #e0e0e0;
+}
+
+textarea {
+    width: 100%;
+    font-family: monospace;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.description {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    padding-left: 10px;
+    border-left: 3px solid #ddd;
+}
+</style>
+
 <script>
 function updateInputField() {
     const format = document.getElementById('input-format').value;
@@ -124,7 +160,17 @@ document.getElementById('openbabel-form').addEventListener('submit', async (e) =
     const requestData = {
         input_format: format,
         data: data,
-        optimize: optimize
+        optimize: optimize,
+        predictions: {
+            enabled: true,
+            logp: true,
+            solubility: true,
+            bioavailability: true,
+            qsar: {
+                toxicity: true,
+                activity: true
+            }
+        }
     };
     
     if (optimize) {
@@ -148,8 +194,8 @@ document.getElementById('openbabel-form').addEventListener('submit', async (e) =
         }
         
         if (result.plot) {
-        const plotData = JSON.parse(result.plot);
-        Plotly.newPlot('openbabel-plot', plotData.data, plotData.layout);
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('openbabel-plot', plotData.data, plotData.layout);
         }
     } catch (error) {
         console.error('Error running OpenBabel analysis:', error);
@@ -157,40 +203,4 @@ document.getElementById('openbabel-form').addEventListener('submit', async (e) =
 });
 
 // Initialize input field visibility
-updateInputField();</script>
-
-<style>
-.examples {
-    margin-top: 10px;
-}
-
-.examples button {
-    margin-right: 10px;
-    padding: 5px 10px;
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-.examples button:hover {
-    background-color: #e0e0e0;
-}
-
-textarea {
-    width: 100%;
-    font-family: monospace;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-}
-
-.description {
-    font-size: 0.9em;
-    color: #666;
-    margin-top: 5px;
-    margin-bottom: 15px;
-    padding-left: 10px;
-    border-left: 3px solid #ddd;
-}
-</style> 
+updateInputField();</script> 

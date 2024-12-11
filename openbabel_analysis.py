@@ -84,7 +84,7 @@ class MoleculeHandler:
             # Count bonds using OBMol
             n_bonds = self.mol.OBMol.NumBonds()
             
-            # Only include descriptors that don't require contribution data files
+            # Basic descriptors
             descriptors = {
                 'molecular_weight': self.mol.molwt,
                 'exact_mass': self.mol.exactmass,
@@ -95,45 +95,179 @@ class MoleculeHandler:
                 'hbd': len([a for a in self.mol.atoms if a.OBAtom.IsHbondDonor()]),
                 'hba': len([a for a in self.mol.atoms if a.OBAtom.IsHbondAcceptor()])
             }
+            
+            # Calculate additional descriptors for predictions
+            mol = self.mol.OBMol
+            
+            # Calculate LogP using built-in method
+            logp = 0
+            try:
+                logp_filter = ob.OBDescriptor.FindType("logp")
+                if logp_filter is not None:
+                    logp = logp_filter.Predict(mol)
+            except:
+                print("Warning: Could not calculate LogP")
+                
+            # Calculate TPSA using built-in method
+            tpsa = 0
+            try:
+                tpsa_filter = ob.OBDescriptor.FindType("TPSA")
+                if tpsa_filter is not None:
+                    tpsa = tpsa_filter.Predict(mol)
+            except:
+                print("Warning: Could not calculate TPSA")
+                
+            # Add calculated descriptors
+            descriptors.update({
+                'topological_polar_surface_area': tpsa,
+                'logp': logp,
+                'aromatic_rings': len([r for r in ob.OBMolRingIter(mol) if r.IsAromatic()]),
+                'heavy_atoms': mol.NumHvyAtoms()
+            })
+            
             return descriptors
         except Exception as e:
             print(f"Error calculating descriptors: {str(e)}")
             return None
             
+    def predict_properties(self, descriptors):
+        """Predict molecular properties using descriptors."""
+        if descriptors is None:
+            return None
+            
+        try:
+            # Get LogP value, default to estimated value if not available
+            logp = descriptors.get('logp', 0)
+            if logp == 0:
+                # Estimate LogP based on heavy atoms and aromatic rings
+                logp = (descriptors['heavy_atoms'] * 0.2 + 
+                       descriptors['aromatic_rings'] * 0.5)
+            
+            # Estimate solubility using modified Yalkowsky equation
+            # logS = 0.5 - 0.01 * (MP - 25) - logP
+            # Using estimated melting point based on molecular weight
+            est_mp = 0.1 * descriptors['molecular_weight'] + 100
+            solubility = 0.5 - 0.01 * (est_mp - 25) - logp
+            
+            # Calculate Lipinski's Rule of 5 parameters
+            lipinski = {
+                'molecular_weight_ok': descriptors['molecular_weight'] <= 500,
+                'logp_ok': -0.4 <= logp <= 5.6,
+                'hbd_ok': descriptors['hbd'] <= 5,
+                'hba_ok': descriptors['hba'] <= 10,
+                'rotatable_bonds_ok': descriptors['n_rotatable_bonds'] <= 10
+            }
+            
+            # Calculate bioavailability score (0-1)
+            bioavailability = sum(1 for v in lipinski.values() if v) / len(lipinski)
+            
+            # Estimate toxicity risk based on structural features
+            toxicity_risk = self._estimate_toxicity(descriptors)
+            
+            # Estimate biological activity based on physicochemical properties
+            activity_score = self._estimate_biological_activity(descriptors)
+            
+            predictions = {
+                'logp': logp,
+                'solubility': solubility,
+                'bioavailability': bioavailability,
+                'lipinski_rules': lipinski,
+                'toxicity_risk': toxicity_risk,
+                'activity_score': activity_score
+            }
+            
+            return predictions
+        except Exception as e:
+            print(f"Error predicting properties: {str(e)}")
+            return None
+            
+    def _estimate_toxicity(self, descriptors):
+        """Simple toxicity estimation based on molecular features."""
+        risk_score = 0
+        
+        # High molecular weight increases risk
+        if descriptors['molecular_weight'] > 800:
+            risk_score += 1
+            
+        # Very high or low LogP increases risk
+        if descriptors['logp'] > 5 or descriptors['logp'] < -2:
+            risk_score += 1
+            
+        # High number of aromatic rings increases risk
+        if descriptors['aromatic_rings'] > 3:
+            risk_score += 1
+            
+        # High TPSA might indicate permeability issues
+        if descriptors['topological_polar_surface_area'] > 140:
+            risk_score += 1
+            
+        return {
+            'score': risk_score,
+            'level': 'Low' if risk_score <= 1 else 'Medium' if risk_score <= 2 else 'High'
+        }
+        
+    def _estimate_biological_activity(self, descriptors):
+        """Estimate potential biological activity based on drug-likeness rules."""
+        score = 0
+        max_score = 5
+        
+        # Molecular weight between 160 and 500
+        if 160 <= descriptors['molecular_weight'] <= 500:
+            score += 1
+            
+        # LogP between -0.4 and 5.6 (extended Lipinski range)
+        if -0.4 <= descriptors['logp'] <= 5.6:
+            score += 1
+            
+        # Topological polar surface area between 20 and 140
+        if 20 <= descriptors['topological_polar_surface_area'] <= 140:
+            score += 1
+            
+        # Number of rotatable bonds <= 10
+        if descriptors['n_rotatable_bonds'] <= 10:
+            score += 1
+            
+        # Hydrogen bond donors and acceptors within range
+        if descriptors['hbd'] <= 5 and descriptors['hba'] <= 10:
+            score += 1
+            
+        return {
+            'score': score / max_score,
+            'level': 'Low' if score <= 2 else 'Medium' if score <= 3 else 'High'
+        }
+        
     def create_visualization(self, plot_type='3d'):
-        """Create visualization of molecular structure."""
+        """Create visualization of molecular structure and predictions."""
         if self.mol is None:
             return None
             
         try:
-            # Get atomic coordinates
+            # Calculate descriptors and predictions
+            descriptors = self.calculate_descriptors()
+            predictions = self.predict_properties(descriptors)
+            
+            # Create subplots: 3D structure and predictions
+            fig = make_subplots(
+                rows=1, cols=2,
+                specs=[[{'type': 'scatter3d'}, {'type': 'table'}]],
+                subplot_titles=('Molecular Structure', 'Properties & Predictions')
+            )
+            
+            # Add 3D structure visualization
             coords = np.array([[a.coords[i] for i in range(3)] for a in self.mol.atoms])
             elements = [a.type for a in self.mol.atoms]
             
-            # Create element-color mapping
+            # Element-color mapping
             element_colors = {
-                'C': 'gray',
-                'H': 'white',
-                'O': 'red',
-                'N': 'blue',
-                'S': 'yellow',
-                'P': 'orange',
-                'F': 'green',
-                'Cl': 'green',
-                'Br': 'brown',
-                'I': 'purple'
+                'C': 'gray', 'H': 'white', 'O': 'red', 'N': 'blue',
+                'S': 'yellow', 'P': 'orange', 'F': 'green', 'Cl': 'green',
+                'Br': 'brown', 'I': 'purple'
             }
             
-            fig = make_subplots(rows=1, cols=2,
-                               subplot_titles=('Structure', 'Properties'),
-                               specs=[[{'type': 'scatter3d'}, {'type': 'table'}]])
-            
-            # Plot 3D structure
+            # Plot atoms
             fig.add_trace(
                 go.Scatter3d(
-                    x=coords[:, 0],
-                    y=coords[:, 1],
-                    z=coords[:, 2],
+                    x=coords[:, 0], y=coords[:, 1], z=coords[:, 2],
                     mode='markers',
                     marker=dict(
                         size=10,
@@ -148,7 +282,7 @@ class MoleculeHandler:
             
             # Add bonds
             for bond in ob.OBMolBondIter(self.mol.OBMol):
-                begin_idx = bond.GetBeginAtomIdx() - 1  # OpenBabel uses 1-based indexing
+                begin_idx = bond.GetBeginAtomIdx() - 1
                 end_idx = bond.GetEndAtomIdx() - 1
                 begin_coords = coords[begin_idx]
                 end_coords = coords[end_idx]
@@ -165,21 +299,49 @@ class MoleculeHandler:
                     row=1, col=1
                 )
             
-            # Calculate and display descriptors
-            descriptors = self.calculate_descriptors()
-            if descriptors:
+            # Create property table
+            if descriptors and predictions:
+                # Combine basic properties and predictions
+                table_data = {
+                    'Property': [],
+                    'Value': []
+                }
+                
+                # Basic properties
+                table_data['Property'].extend([
+                    'Formula', 'Molecular Weight', 'Number of Atoms',
+                    'Number of Bonds', 'Number of Rotatable Bonds'
+                ])
+                table_data['Value'].extend([
+                    descriptors['formula'],
+                    f"{descriptors['molecular_weight']:.2f}",
+                    str(descriptors['n_atoms']),
+                    str(descriptors['n_bonds']),
+                    str(descriptors['n_rotatable_bonds'])
+                ])
+                
+                # Predictions
+                table_data['Property'].extend([
+                    'LogP', 'Solubility (logS)', 'Bioavailability Score',
+                    'Toxicity Risk', 'Biological Activity'
+                ])
+                table_data['Value'].extend([
+                    f"{predictions['logp']:.2f}",
+                    f"{predictions['solubility']:.2f}",
+                    f"{predictions['bioavailability']:.2f}",
+                    predictions['toxicity_risk']['level'],
+                    predictions['activity_score']['level']
+                ])
+                
                 fig.add_trace(
                     go.Table(
                         header=dict(
-                            values=['Property', 'Value'],
+                            values=list(table_data.keys()),
                             fill_color='paleturquoise',
                             align='left'
                         ),
                         cells=dict(
-                            values=[
-                                list(descriptors.keys()),
-                                list(descriptors.values())
-                            ],
+                            values=list(table_data.values()),
                             fill_color='lavender',
                             align='left'
                         )
@@ -189,13 +351,13 @@ class MoleculeHandler:
             
             # Update layout
             fig.update_layout(
-                title='Molecular Structure Analysis',
+                title='Molecular Analysis with Predictions',
                 scene=dict(
                     xaxis_title='X (Å)',
                     yaxis_title='Y (Å)',
                     zaxis_title='Z (Å)'
                 ),
-                height=600,
+                height=800,
                 showlegend=True
             )
             
