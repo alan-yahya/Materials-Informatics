@@ -15,7 +15,7 @@ from qutip_simulation import run_qutip_simulation
 from ase_simulation import run_ase_simulation
 from pymatgen_analysis import run_pymatgen_analysis
 from chemml_analysis import run_chemml_analysis
-from openbabel_analysis import run_openbabel_analysis, compare_molecules
+from openbabel_analysis import run_openbabel_analysis, compare_molecules, analyze_reaction
 from mdanalysis_simulation import run_mdanalysis
 
 app = Flask(__name__)
@@ -386,6 +386,37 @@ def openbabel_similarity():
         
     except Exception as e:
         print(f"Error in similarity calculation: {str(e)}")
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+@app.route('/openbabel/reaction', methods=['POST'])
+def openbabel_reaction():
+    try:
+        data = request.get_json()
+        print("Received reaction analysis request with data:", data)
+        
+        # Get reaction SMILES and validation options
+        reaction_smiles = data.get('reaction_smiles')
+        validation_options = data.get('validation_options', {})
+        
+        if not reaction_smiles:
+            raise ValueError("Reaction SMILES is required")
+            
+        # Analyze reaction
+        result = analyze_reaction(reaction_smiles, validation_options)
+        
+        if result is None:
+            raise ValueError("Failed to analyze reaction")
+            
+        return jsonify({
+            'validation_html': result['validation_html'],
+            'plot': result['plot'].to_json() if result['plot'] else None,
+            'is_valid': result['is_valid']
+        })
+        
+    except Exception as e:
+        print(f"Error in reaction analysis: {str(e)}")
         return jsonify({
             'error': str(e)
         }), 500

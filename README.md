@@ -1,6 +1,8 @@
 # Orbital Simulations
 
-A flask deployment of a number of scientific python libraries for material visualisations.
+A flask deployment of multiple scientific python libraries for material verification and visualisations.
+
+Built to complement a literature-based scientific discovery pipeline.
 
 Built as part of a material science pipeline, using NanoBERT and NanoSearch for the extrraction of relevant information from the literature. To this effect, Molecular structure analysis and MD simulation software is used.
 

@@ -125,6 +125,50 @@
             <div id="similarity-plot"></div>
         </div>
     </div>
+
+    <!-- Reaction Section -->
+    <div class="reaction-section" style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+        <h3>Reaction Parsing and Validation</h3>
+        <form id="reaction-form">
+            <div class="form-group">
+                <label>Reaction SMILES:</label>
+                <input type="text" id="reaction-smiles" placeholder="Enter reaction SMILES (e.g., CC(=O)O.O>>CC(=O)O[Na])">
+                <p class="description">
+                    Format: reactants>>products or reactants>agent>products<br>
+                    Use '.' to separate multiple molecules in reactants or products<br>
+                    Example: CC(=O)O.O>>CC(=O)O[Na] (Acetic acid + Oxygen -> Sodium acetate)
+                </p>
+                <div class="examples">
+                    Examples:
+                    <button type="button" onclick="setReactionExample('CC(=O)O.O>>CC(=O)O[Na]')">Acetate Formation</button>
+                    <button type="button" onclick="setReactionExample('C=CC=C.CC=CC>>CC1CCC1')">Cycloaddition</button>
+                    <button type="button" onclick="setReactionExample('CCO.[O-][N+](=O)[O-]>H2SO4>CCO[N+](=O)[O-]')">Nitration</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Validation Options:</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="check-mass-balance" checked>
+                    <label for="check-mass-balance">Check Mass Balance</label>
+                    
+                    <input type="checkbox" id="check-atom-mapping" checked>
+                    <label for="check-atom-mapping">Validate Atom Mapping</label>
+                    
+                    <input type="checkbox" id="check-valence" checked>
+                    <label for="check-valence">Check Valence Rules</label>
+                </div>
+            </div>
+
+            <button type="submit">Analyze Reaction</button>
+        </form>
+        
+        <div id="reaction-results" style="display: none; margin-top: 20px;">
+            <h4>Reaction Analysis Results</h4>
+            <div id="reaction-validation"></div>
+            <div id="reaction-plot"></div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -175,6 +219,41 @@ textarea {
 
 .download-button:hover {
     background-color: #45a049;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.validation-result {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.validation-success {
+    background-color: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    color: #2e7d32;
+}
+
+.validation-warning {
+    background-color: #fff3e0;
+    border: 1px solid #ffcc80;
+    color: #ef6c00;
+}
+
+.validation-error {
+    background-color: #ffebee;
+    border: 1px solid #ef9a9a;
+    color: #c62828;
 }
 </style>
 
@@ -313,6 +392,55 @@ document.getElementById('similarity-form').addEventListener('submit', async (e) 
         }
     } catch (error) {
         console.error('Error calculating similarity:', error);
+    }
+});
+
+// Reaction form submission
+function setReactionExample(reactionSmiles) {
+    document.getElementById('reaction-smiles').value = reactionSmiles;
+}
+
+document.getElementById('reaction-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        reaction_smiles: document.getElementById('reaction-smiles').value,
+        validation_options: {
+            check_mass_balance: document.getElementById('check-mass-balance').checked,
+            check_atom_mapping: document.getElementById('check-atom-mapping').checked,
+            check_valence: document.getElementById('check-valence').checked
+        }
+    };
+
+    try {
+        const response = await fetch('/openbabel/reaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.error) {
+            console.error('Reaction analysis error:', result.error);
+            return;
+        }
+
+        // Show results section
+        document.getElementById('reaction-results').style.display = 'block';
+        
+        // Display validation results
+        const validationDiv = document.getElementById('reaction-validation');
+        validationDiv.innerHTML = result.validation_html;
+        
+        // Plot reaction if available
+        if (result.plot) {
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('reaction-plot', plotData.data, plotData.layout);
+        }
+    } catch (error) {
+        console.error('Error analyzing reaction:', error);
     }
 });
 

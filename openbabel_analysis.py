@@ -1061,3 +1061,246 @@ def run_openbabel_analysis(input_format='smiles', data=None, **kwargs):
             height=400
         )
         return fig, None 
+
+def analyze_reaction(reaction_smiles, validation_options=None):
+    """Analyze and validate a chemical reaction."""
+    try:
+        if validation_options is None:
+            validation_options = {
+                'check_mass_balance': True,
+                'check_atom_mapping': True,
+                'check_valence': True
+            }
+            
+        # Parse reaction SMILES
+        parts = reaction_smiles.split('>')
+        if len(parts) == 2:
+            reactants_smiles = parts[0]
+            products_smiles = parts[1]
+            agent_smiles = ""
+        elif len(parts) == 3:
+            reactants_smiles = parts[0]
+            agent_smiles = parts[1]
+            products_smiles = parts[2]
+        else:
+            raise ValueError("Invalid reaction SMILES format")
+
+        # Create reactant and product molecules
+        reactants = []
+        products = []
+        
+        # Parse reactants
+        for smiles in reactants_smiles.split('.'):
+            if smiles.strip():
+                mol = pybel.readstring('smi', smiles)
+                mol.make3D()
+                reactants.append(mol)
+                
+        # Parse products
+        for smiles in products_smiles.split('.'):
+            if smiles.strip():
+                mol = pybel.readstring('smi', smiles)
+                mol.make3D()
+                products.append(mol)
+                
+        validation_results = []
+        warnings = []
+        errors = []
+        
+        # Check mass balance
+        if validation_options.get('check_mass_balance'):
+            reactant_mass = sum(mol.molwt for mol in reactants)
+            product_mass = sum(mol.molwt for mol in products)
+            mass_diff = abs(reactant_mass - product_mass)
+            
+            if mass_diff < 0.01:
+                validation_results.append(("Mass Balance", True, f"Mass is conserved (Δm = {mass_diff:.3f} g/mol)"))
+            else:
+                warnings.append(f"Mass balance issue: Δm = {mass_diff:.3f} g/mol")
+        
+        # Check atom mapping
+        if validation_options.get('check_atom_mapping'):
+            reactant_atoms = sum(len(mol.atoms) for mol in reactants)
+            product_atoms = sum(len(mol.atoms) for mol in products)
+            
+            if reactant_atoms == product_atoms:
+                validation_results.append(("Atom Count", True, f"Atom count matches ({reactant_atoms} atoms)"))
+            else:
+                errors.append(f"Atom count mismatch: {reactant_atoms} (reactants) vs {product_atoms} (products)")
+        
+        # Check valence rules
+        if validation_options.get('check_valence'):
+            valence_issues = []
+            
+            # Define typical valences for common elements
+            typical_valences = {
+                'C': 4, 'N': 3, 'O': 2, 'F': 1, 'Cl': 1, 'Br': 1, 'I': 1,
+                'S': [2, 4, 6], 'P': [3, 5], 'B': 3
+            }
+            
+            for i, mol in enumerate(reactants + products):
+                for atom in mol.atoms:
+                    symbol = atom.type
+                    if symbol in typical_valences:
+                        # Count bonds and formal charge
+                        total_bonds = sum(bond.GetBondOrder() 
+                                        for bond in ob.OBAtomBondIter(atom.OBAtom))
+                        formal_charge = atom.OBAtom.GetFormalCharge()
+                        
+                        # Check if valence is valid
+                        expected_valences = typical_valences[symbol]
+                        if isinstance(expected_valences, list):
+                            valid_valence = total_bonds + abs(formal_charge) in expected_valences
+                        else:
+                            valid_valence = total_bonds + abs(formal_charge) == expected_valences
+                            
+                        if not valid_valence:
+                            valence_issues.append(
+                                f"Unusual valence for {symbol} atom in "
+                                f"{'reactant' if i < len(reactants) else 'product'} "
+                                f"{i % len(reactants) + 1} "
+                                f"(bonds: {total_bonds}, charge: {formal_charge})"
+                            )
+            
+            if not valence_issues:
+                validation_results.append(("Valence Rules", True, "All atoms have typical valence states"))
+            else:
+                warnings.extend(valence_issues)  # Make these warnings instead of errors
+        
+        # Create visualization
+        fig = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=('Reactants', 'Products'),
+            specs=[[{'type': 'scene'}], [{'type': 'scene'}]],
+            vertical_spacing=0.2
+        )
+        
+        # Plot reactants
+        _add_molecules_to_plot(fig, reactants, row=1, col=1)
+        
+        # Plot products
+        _add_molecules_to_plot(fig, products, row=2, col=1)
+        
+        # Update layout
+        fig.update_layout(
+            height=800,
+            showlegend=True,
+            scene=dict(
+                xaxis_title='X (Å)',
+                yaxis_title='Y (Å)',
+                zaxis_title='Z (Å)'
+            ),
+            scene2=dict(
+                xaxis_title='X (Å)',
+                yaxis_title='Y (Å)',
+                zaxis_title='Z (Å)'
+            )
+        )
+        
+        # Add reaction equation to title
+        equation = f"{reactants_smiles}"
+        if agent_smiles:
+            equation += f" ({agent_smiles})"
+        equation += f" → {products_smiles}"
+        fig.update_layout(
+            title=f"Reaction Analysis: {equation}"
+        )
+        
+        # Generate HTML for validation results
+        validation_html = _generate_validation_html(validation_results, warnings, errors)
+        
+        return {
+            'is_valid': len(errors) == 0,
+            'validation_results': validation_results,
+            'warnings': warnings,
+            'errors': errors,
+            'validation_html': validation_html,
+            'plot': fig
+        }
+        
+    except Exception as e:
+        print(f"Error analyzing reaction: {str(e)}")
+        return None
+
+def _add_molecules_to_plot(fig, molecules, row, col):
+    """Add molecules to the reaction plot."""
+    spacing = 5  # Spacing between molecules
+    current_offset = 0
+    
+    for mol in molecules:
+        # Get coordinates from atoms
+        coords = np.array([[atom.coords[i] for i in range(3)] for atom in mol.atoms])
+        
+        # Offset molecule position
+        coords[:, 0] += current_offset
+        
+        # Plot atoms
+        elements = [atom.type for atom in mol.atoms]
+        
+        fig.add_trace(
+            go.Scatter3d(
+                x=coords[:, 0], y=coords[:, 1], z=coords[:, 2],
+                mode='markers',
+                marker=dict(
+                    size=10,
+                    color=[{'C': 'gray', 'H': 'white', 'O': 'red', 'N': 'blue'}.get(el, 'gray') 
+                           for el in elements],
+                    symbol='circle'
+                ),
+                text=elements,
+                name=f'Molecule {current_offset//spacing + 1}'
+            ),
+            row=row, col=col
+        )
+        
+        # Add bonds
+        for atom in mol.atoms:
+            for bond in ob.OBAtomBondIter(atom.OBAtom):
+                begin_atom = mol.atoms[bond.GetBeginAtomIdx() - 1]
+                end_atom = mol.atoms[bond.GetEndAtomIdx() - 1]
+                begin_coords = np.array(begin_atom.coords) + [current_offset, 0, 0]
+                end_coords = np.array(end_atom.coords) + [current_offset, 0, 0]
+                
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=[begin_coords[0], end_coords[0]],
+                        y=[begin_coords[1], end_coords[1]],
+                        z=[begin_coords[2], end_coords[2]],
+                        mode='lines',
+                        line=dict(color='gray', width=2),
+                        showlegend=False
+                    ),
+                    row=row, col=col
+                )
+        
+        current_offset += spacing
+
+def _generate_validation_html(validation_results, warnings, errors):
+    """Generate HTML for validation results."""
+    html = []
+    
+    # Add successful validations
+    for name, success, message in validation_results:
+        html.append(f"""
+            <div class="validation-result validation-success">
+                <strong>{name}:</strong> {message}
+            </div>
+        """)
+    
+    # Add warnings
+    for warning in warnings:
+        html.append(f"""
+            <div class="validation-result validation-warning">
+                <strong>Warning:</strong> {warning}
+            </div>
+        """)
+    
+    # Add errors
+    for error in errors:
+        html.append(f"""
+            <div class="validation-result validation-error">
+                <strong>Error:</strong> {error}
+            </div>
+        """)
+    
+    return "".join(html) 
