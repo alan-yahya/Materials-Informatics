@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Simulations</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .plot {
+            min-height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background-color: #f8f8f8;
+        }
+        .tab.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Physics Simulations</h1>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('classical')">Classical Orbital</div>
+        <div class="tab" onclick="switchTab('quantum')">Quantum Orbital</div>
+        <div class="tab" onclick="switchTab('double-slit')">Double Slit</div>
+        <div class="tab" onclick="switchTab('battery')">Battery Simulation</div>
+    </div>
+
+    <!-- Classical Orbital Simulation -->
+    <div id="classical-container" class="container">
+        <div class="controls">
+            <form id="simulation-form">
+                <div class="form-group">
+                    <label>Mass (kg):</label>
+                    <input type="number" id="mass" value="1e-20" step="1e-21">
+                </div>
+                <div class="form-group">
+                    <label>Charge (C):</label>
+                    <input type="number" id="charge" value="1.6e-19" step="1e-20">
+                </div>
+                <h3>Initial Position (m)</h3>
+                <div class="form-group">
+                    <label>X:</label>
+                    <input type="number" id="pos-x" value="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Y:</label>
+                    <input type="number" id="pos-y" value="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Z:</label>
+                    <input type="number" id="pos-z" value="0" step="0.1">
+                </div>
+                <h3>Initial Velocity (m/s)</h3>
+                <div class="form-group">
+                    <label>X:</label>
+                    <input type="number" id="vel-x" value="100" step="10">
+                </div>
+                <div class="form-group">
+                    <label>Y:</label>
+                    <input type="number" id="vel-y" value="0" step="10">
+                </div>
+                <div class="form-group">
+                    <label>Z:</label>
+                    <input type="number" id="vel-z" value="0" step="10">
+                </div>
+                <h3>Magnetic Field (T)</h3>
+                <div class="form-group">
+                    <label>X:</label>
+                    <input type="number" id="mag-x" value="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Y:</label>
+                    <input type="number" id="mag-y" value="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Z:</label>
+                    <input type="number" id="mag-z" value="1" step="0.1">
+                </div>
+                <button type="submit">Run Classical Simulation</button>
+            </form>
+        </div>
+        <div id="classical-plot" class="plot"></div>
+    </div>
+
+    <!-- Quantum Orbital Simulation -->
+    <div id="quantum-container" class="container" style="display: none;">
+        <div class="controls">
+            <form id="quantum-form">
+                <div class="form-group">
+                    <label>Atom:</label>
+                    <select id="atom">
+                        {% for atom in atoms %}
+                        <option value="{{ atom }}">{{ atom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Basis Set:</label>
+                    <select id="basis">
+                        {% for basis in basis_sets %}
+                        <option value="{{ basis }}">{{ basis }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Grid Points:</label>
+                    <input type="number" id="grid-points" value="50" min="20" max="100" step="5">
+                </div>
+                <div class="form-group">
+                    <label>Radius (Å):</label>
+                    <input type="number" id="radius" value="5.0" min="1" max="10" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>Isosurface Value:</label>
+                    <input type="number" id="isovalue" value="0.01" min="0.001" max="0.1" step="0.001">
+                </div>
+                <button type="submit">Calculate Quantum Orbital</button>
+            </form>
+        </div>
+        <div id="quantum-plot" class="plot"></div>
+    </div>
+
+    <!-- Double Slit Simulation -->
+    <div id="double-slit-container" class="container" style="display: none;">
+        <div class="controls">
+            <form id="double-slit-form">
+                <div class="form-group">
+                    <label>Slit Width (micrometers):</label>
+                    <input type="number" id="slit-width" value="1" min="0.1" max="10" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Slit Separation (micrometers):</label>
+                    <input type="number" id="slit-separation" value="5" min="1" max="20" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Wavelength (nm):</label>
+                    <input type="number" id="wavelength" value="500" min="380" max="750" step="10">
+                </div>
+                <button type="submit">Run Double Slit Simulation</button>
+            </form>
+        </div>
+        <div id="double-slit-plot" class="plot"></div>
+    </div>
+
+    <!-- Battery Simulation -->
+    <div id="battery-container" class="container" style="display: none;">
+        <div class="controls">
+            <form id="battery-form">
+                <div class="form-group">
+                    <label>Initial Capacity (mAh/g):</label>
+                    <input type="number" id="initial-capacity" value="900" min="100" max="2000" step="10">
+                </div>
+                <div class="form-group">
+                    <label>Number of Cycles:</label>
+                    <input type="number" id="cycles" value="100" min="10" max="1000" step="10">
+                </div>
+                <button type="submit">Run Battery Simulation</button>
+            </form>
+        </div>
+        <div id="battery-plot" class="plot"></div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab:nth-child(${
+                tab === 'classical' ? 1 : 
+                (tab === 'quantum' ? 2 : 
+                (tab === 'double-slit' ? 3 : 4))
+            })`).classList.add('active');
+            
+            document.getElementById('classical-container').style.display = tab === 'classical' ? 'grid' : 'none';
+            document.getElementById('quantum-container').style.display = tab === 'quantum' ? 'grid' : 'none';
+            document.getElementById('double-slit-container').style.display = tab === 'double-slit' ? 'grid' : 'none';
+            document.getElementById('battery-container').style.display = tab === 'battery' ? 'grid' : 'none';
+        }
+
+        document.getElementById('simulation-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                mass: parseFloat(document.getElementById('mass').value),
+                charge: parseFloat(document.getElementById('charge').value),
+                initial_position: [
+                    parseFloat(document.getElementById('pos-x').value),
+                    parseFloat(document.getElementById('pos-y').value),
+                    parseFloat(document.getElementById('pos-z').value)
+                ],
+                initial_velocity: [
+                    parseFloat(document.getElementById('vel-x').value),
+                    parseFloat(document.getElementById('vel-y').value),
+                    parseFloat(document.getElementById('vel-z').value)
+                ],
+                magnetic_field: [
+                    parseFloat(document.getElementById('mag-x').value),
+                    parseFloat(document.getElementById('mag-y').value),
+                    parseFloat(document.getElementById('mag-z').value)
+                ],
+                electric_field: [0, 0, 0]
+            };
+
+            const response = await fetch('/simulate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('classical-plot', plotData.data, plotData.layout);
+        });
+
+        document.getElementById('quantum-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                atom: document.getElementById('atom').value,
+                basis: document.getElementById('basis').value,
+                grid_points: parseInt(document.getElementById('grid-points').value),
+                radius: parseFloat(document.getElementById('radius').value),
+                isovalue: parseFloat(document.getElementById('isovalue').value)
+            };
+
+            const response = await fetch('/quantum_orbital', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('quantum-plot', plotData.data, plotData.layout);
+        });
+
+        document.getElementById('double-slit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                slit_width: parseFloat(document.getElementById('slit-width').value),
+                slit_separation: parseFloat(document.getElementById('slit-separation').value),
+                wavelength: parseFloat(document.getElementById('wavelength').value) * 1e-9  // Convert nm to m
+            };
+
+            const response = await fetch('/double_slit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('double-slit-plot', plotData.data, plotData.layout);
+        });
+
+        document.getElementById('battery-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                initial_capacity: parseFloat(document.getElementById('initial-capacity').value),
+                cycles: parseInt(document.getElementById('cycles').value)
+            };
+
+            const response = await fetch('/battery', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('battery-plot', plotData.data, plotData.layout);
+        });
+    </script>
+</body>
+</html> 
