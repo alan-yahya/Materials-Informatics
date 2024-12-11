@@ -147,7 +147,6 @@
             </div>
 
             <div class="form-group">
-                <label>Validation Options:</label>
                 <div class="checkbox-group">
                     <input type="checkbox" id="check-mass-balance" checked>
                     <label for="check-mass-balance">Check Mass Balance</label>
@@ -228,8 +227,15 @@ textarea {
     margin: 10px 0;
 }
 
+.checkbox-group label {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+}
+
 .checkbox-group input[type="checkbox"] {
-    margin-right: 10px;
+    margin: 0 8px 0 0;
+    vertical-align: middle;
 }
 
 .validation-result {
@@ -382,9 +388,6 @@ document.getElementById('similarity-form').addEventListener('submit', async (e) 
         // Show results section
         document.getElementById('similarity-results').style.display = 'block';
         
-        // Display similarity score and description
-        document.getElementById('similarity-score').innerHTML = result.description;
-        
         // Plot comparison if available
         if (result.plot) {
             const plotData = JSON.parse(result.plot);
@@ -446,4 +449,10 @@ document.getElementById('reaction-form').addEventListener('submit', async (e) =>
 
 // Initialize input field visibility
 updateInputField();
+
+// Add this after the other event listeners
+document.getElementById('optimize-geometry').addEventListener('change', function() {
+    const optimizationParams = document.getElementById('optimization-params');
+    optimizationParams.style.display = this.checked ? 'block' : 'none';
+});
 </script> 
