@@ -821,6 +821,70 @@ class MoleculeHandler:
             print(f"Error calculating Tanimoto coefficient: {str(e)}")
             return None
 
+def _get_similarity_description(mol1, mol2, similarity, fp_type):
+    """Generate detailed description of molecular similarity comparison."""
+    try:
+        # Get basic molecular properties
+        props1 = {
+            'formula': mol1.formula,
+            'weight': mol1.molwt,
+            'n_atoms': len(mol1.atoms),
+            'n_bonds': mol1.OBMol.NumBonds()
+        }
+        
+        props2 = {
+            'formula': mol2.formula,
+            'weight': mol2.molwt,
+            'n_atoms': len(mol2.atoms),
+            'n_bonds': mol2.OBMol.NumBonds()
+        }
+        
+        # Generate description
+        description = f"""
+<b>Molecular Similarity Analysis</b><br>
+<br>
+<b>Molecule 1:</b><br>
+• Formula: {props1['formula']}<br>
+• Molecular Weight: {props1['weight']:.2f} g/mol<br>
+• Number of Atoms: {props1['n_atoms']}<br>
+• Number of Bonds: {props1['n_bonds']}<br>
+<br>
+<b>Molecule 2:</b><br>
+• Formula: {props2['formula']}<br>
+• Molecular Weight: {props2['weight']:.2f} g/mol<br>
+• Number of Atoms: {props2['n_atoms']}<br>
+• Number of Bonds: {props2['n_bonds']}<br>
+<br>
+<b>Similarity Analysis:</b><br>
+• Fingerprint Type: {fp_type.upper()}<br>
+• Tanimoto Coefficient: {similarity:.3f}<br>
+<br>
+<b>Interpretation:</b><br>
+• The Tanimoto coefficient ranges from 0 (completely different) to 1 (identical)<br>
+• Values > 0.85 indicate high structural similarity<br>
+• Values 0.5-0.85 indicate moderate similarity<br>
+• Values < 0.5 indicate low similarity<br>
+<br>
+<b>Method Details:</b><br>
+• {fp_type.upper()} fingerprint type was used to encode molecular structure<br>
+• Similarity was calculated using the Tanimoto coefficient (Tc)<br>
+• Tc = (features in common) / (total unique features)<br>
+"""
+        
+        # Add similarity interpretation
+        if similarity > 0.85:
+            description += "• <b>Result:</b> These molecules show high structural similarity"
+        elif similarity > 0.5:
+            description += "• <b>Result:</b> These molecules show moderate structural similarity"
+        else:
+            description += "• <b>Result:</b> These molecules show low structural similarity"
+            
+        return description
+        
+    except Exception as e:
+        print(f"Error generating similarity description: {str(e)}")
+        return "Error generating detailed description"
+
 def compare_molecules(smiles1, smiles2, fp_type='fp2'):
     """Compare two molecules using fingerprint similarity."""
     try:
@@ -830,16 +894,23 @@ def compare_molecules(smiles1, smiles2, fp_type='fp2'):
         
         # Read molecules
         if not handler1.read_molecule(smiles1, 'smiles') or not handler2.read_molecule(smiles2, 'smiles'):
-            return None, None
+            return None, None, None
             
         # Calculate similarity
         similarity = handler1.calculate_similarity(handler2.mol, fp_type)
         
+        # Generate detailed description
+        description = _get_similarity_description(handler1.mol, handler2.mol, similarity, fp_type)
+        
         # Create visualization with 2D structure comparison
         fig = make_subplots(
-            rows=1, cols=2,
-            subplot_titles=('Molecule 1', 'Molecule 2'),
-            specs=[[{'type': 'scene'}, {'type': 'scene'}]]  # Use 'scene' for 3D plots
+            rows=2, cols=2,
+            subplot_titles=('Molecule 1', 'Molecule 2', 'Analysis Details'),
+            specs=[
+                [{'type': 'scene'}, {'type': 'scene'}],
+                [{'type': 'table', 'colspan': 2}, None]
+            ],
+            vertical_spacing=0.15
         )
         
         # Add 3D structures
@@ -883,10 +954,23 @@ def compare_molecules(smiles1, smiles2, fp_type='fp2'):
                     row=1, col=i
                 )
         
+        # Add description as a table
+        fig.add_trace(
+            go.Table(
+                cells=dict(
+                    values=[[description]],
+                    align=['left'],
+                    font=dict(size=12),
+                    height=30
+                )
+            ),
+            row=2, col=1
+        )
+        
         # Update layout
         fig.update_layout(
             title=f'Molecular Comparison (Similarity: {similarity:.3f})',
-            height=500,
+            height=800,  # Increased height to accommodate description
             showlegend=True,
             scene=dict(
                 xaxis_title='X (Å)',
@@ -900,11 +984,11 @@ def compare_molecules(smiles1, smiles2, fp_type='fp2'):
             )
         )
         
-        return similarity, fig
+        return similarity, description, fig
         
     except Exception as e:
         print(f"Error comparing molecules: {str(e)}")
-        return None, None
+        return None, None, None
 
 def run_openbabel_analysis(input_format='smiles', data=None, **kwargs):
     """Run molecular analysis using OpenBabel."""

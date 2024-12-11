@@ -373,13 +373,14 @@ def openbabel_similarity():
             raise ValueError("Both SMILES strings are required")
             
         # Calculate similarity and get visualization
-        similarity, fig = compare_molecules(smiles1, smiles2, fp_type)
+        similarity, description, fig = compare_molecules(smiles1, smiles2, fp_type)
         
         if similarity is None:
             raise ValueError("Failed to calculate similarity")
             
         return jsonify({
             'similarity': similarity,
+            'description': description,
             'plot': fig.to_json() if fig else None
         })
         

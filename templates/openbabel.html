@@ -303,9 +303,8 @@ document.getElementById('similarity-form').addEventListener('submit', async (e) 
         // Show results section
         document.getElementById('similarity-results').style.display = 'block';
         
-        // Display similarity score
-        document.getElementById('similarity-score').innerHTML = 
-            `<p>Tanimoto Similarity Score: <strong>${result.similarity.toFixed(3)}</strong></p>`;
+        // Display similarity score and description
+        document.getElementById('similarity-score').innerHTML = result.description;
         
         // Plot comparison if available
         if (result.plot) {
