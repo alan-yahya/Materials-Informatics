@@ -1,6 +1,14 @@
 # Orbital Simulations
 
-A comprehensive web application for simulating and visualizing various quantum, classical, and materials science phenomena. Built with Flask and modern scientific Python libraries.
+A flask deployment of a number of scientific python libraries for material visualisations.
+
+Built as part of a material science pipeline, using NanoBERT and NanoSearch for the extrraction of relevant information from the literature. To this effect, Molecular structure analysis and MD simulation software is used.
+
+materials science visualisations.
+
+A comprehensive web application for simulating and visualizing various quantum, classical, and materials science phenomena. 
+
+Built with Flask and modern scientific Python libraries.
 
 ## Core Modules
 

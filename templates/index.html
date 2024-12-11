@@ -79,57 +79,11 @@
     <h1>NanoSimulations</h1>
     
     <div class="tabs">
-        <button class="tab-button" onclick="showTab('classical')">Classical</button>
+        <button class="tab-button" onclick="showTab('openbabel')">OpenBabel</button>
         <button class="tab-button" onclick="showTab('quantum')">Quantum</button>
-        <button class="tab-button" onclick="showTab('pyvista')">PyVista</button>
-        <button class="tab-button" onclick="showTab('ase')">ASE</button>
+        <button class="tab-button" onclick="showTab('ase')">ASE (Atomic Simulation Environment)</button>
         <button class="tab-button" onclick="showTab('pymatgen')">Pymatgen</button>
-        <button class="tab-button" onclick="showTab('qe')">Quantum ESPRESSO</button>
         <button class="tab-button" onclick="showTab('chemml')">ChemML</button>
-    </div>
-
-    <!-- Electromagnetic Trajectory Simulation -->
-    <div id="classical-container" class="container">
-        <div class="controls">
-            <form id="simulation-form">
-                <div class="form-group">
-                    <label>Mass (kg):</label>
-                    <input type="number" id="mass" value="1e-20" step="1e-21">
-                </div>
-                <div class="form-group">
-                    <label>Charge (C):</label>
-                    <input type="number" id="charge" value="1.6e-19" step="1e-20">
-                </div>
-                <h3>Initial Velocity (m/s)</h3>
-                <div class="form-group">
-                    <label>X:</label>
-                    <input type="number" id="vel-x" value="100" step="10">
-                </div>
-                <div class="form-group">
-                    <label>Y:</label>
-                    <input type="number" id="vel-y" value="0" step="10">
-                </div>
-                <div class="form-group">
-                    <label>Z:</label>
-                    <input type="number" id="vel-z" value="0" step="10">
-                </div>
-                <h3>Magnetic Field (T)</h3>
-                <div class="form-group">
-                    <label>X:</label>
-                    <input type="number" id="mag-x" value="0" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>Y:</label>
-                    <input type="number" id="mag-y" value="0" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>Z:</label>
-                    <input type="number" id="mag-z" value="1" step="0.1">
-                </div>
-                <button type="submit">Run Trajectory Simulation</button>
-            </form>
-        </div>
-        <div id="classical-plot" class="plot"></div>
     </div>
 
     <!-- Quantum Orbital Simulation -->
@@ -322,6 +276,8 @@
 
     {% include 'qe.html' %}
     {% include 'chemml.html' %}
+    {% include 'openbabel.html' %}
+    {% include 'mdanalysis.html' %}
 
     <script>
         async function loadQutipContainer() {
@@ -337,12 +293,10 @@
 
         function showTab(tabName) {
             // Hide all containers
-            document.getElementById('classical-container').style.display = 'none';
+            document.getElementById('openbabel-container').style.display = 'none';
             document.getElementById('quantum-container').style.display = 'none';
-            document.getElementById('pyvista-container').style.display = 'none';
             document.getElementById('ase-container').style.display = 'none';
             document.getElementById('pymatgen-container').style.display = 'none';
-            document.getElementById('qe-container').style.display = 'none';
             document.getElementById('chemml-container').style.display = 'none';
             
             // Show selected container
@@ -358,37 +312,9 @@
             }
         }
 
-        document.getElementById('simulation-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const data = {
-                mass: parseFloat(document.getElementById('mass').value),
-                charge: parseFloat(document.getElementById('charge').value),
-                initial_position: [0, 0, 0],  // Fixed initial position at origin
-                initial_velocity: [
-                    parseFloat(document.getElementById('vel-x').value),
-                    parseFloat(document.getElementById('vel-y').value),
-                    parseFloat(document.getElementById('vel-z').value)
-                ],
-                magnetic_field: [
-                    parseFloat(document.getElementById('mag-x').value),
-                    parseFloat(document.getElementById('mag-y').value),
-                    parseFloat(document.getElementById('mag-z').value)
-                ],
-                electric_field: [0, 0, 0]
-            };
-
-            const response = await fetch('/simulate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-            const plotData = JSON.parse(result.plot);
-            Plotly.newPlot('classical-plot', plotData.data, plotData.layout);
+        // Initialize with openbabel tab active
+        document.addEventListener('DOMContentLoaded', function() {
+            showTab('openbabel');
         });
 
         document.getElementById('quantum-form').addEventListener('submit', async (e) => {
