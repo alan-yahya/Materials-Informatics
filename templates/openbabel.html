@@ -71,6 +71,9 @@
 
             <button type="submit">Analyze Structure</button>
         </form>
+        <div id="download-section" style="display: none; margin-top: 20px;">
+            <button id="download-pdb" class="download-button">Download Structure (PDB)</button>
+        </div>
     </div>
     <div id="openbabel-plot" class="plot"></div>
 </div>
@@ -109,6 +112,21 @@ textarea {
     padding-left: 10px;
     border-left: 3px solid #ddd;
 }
+
+.download-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.download-button:hover {
+    background-color: #45a049;
+}
 </style>
 
 <script>
@@ -139,6 +157,8 @@ document.getElementById('optimize-geometry').addEventListener('change', function
     document.getElementById('optimization-params').style.display = 
         this.checked ? 'block' : 'none';
 });
+
+let currentPDBData = null;
 
 document.getElementById('openbabel-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -193,6 +213,13 @@ document.getElementById('openbabel-form').addEventListener('submit', async (e) =
             return;
         }
         
+        // Store PDB data
+        currentPDBData = result.pdb_data;
+        
+        // Show/hide download button based on PDB data availability
+        document.getElementById('download-section').style.display = 
+            currentPDBData ? 'block' : 'none';
+        
         if (result.plot) {
             const plotData = JSON.parse(result.plot);
             Plotly.newPlot('openbabel-plot', plotData.data, plotData.layout);
@@ -202,5 +229,25 @@ document.getElementById('openbabel-form').addEventListener('submit', async (e) =
     }
 });
 
+// Add download handler
+document.getElementById('download-pdb').addEventListener('click', function() {
+    if (!currentPDBData) return;
+    
+    // Create blob and download
+    const blob = new Blob([currentPDBData], { type: 'chemical/x-pdb' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'structure.pdb';
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+});
+
 // Initialize input field visibility
-updateInputField();</script> 
+updateInputField();
+</script> 

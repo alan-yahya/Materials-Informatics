@@ -16,6 +16,7 @@ from ase_simulation import run_ase_simulation
 from pymatgen_analysis import run_pymatgen_analysis
 from chemml_analysis import run_chemml_analysis
 from openbabel_analysis import run_openbabel_analysis
+from mdanalysis_simulation import run_mdanalysis
 
 app = Flask(__name__)
 
@@ -305,28 +306,54 @@ def openbabel():
         data = request.get_json()
         print("Received OpenBabel request with data:", data)
         
-        # Get analysis parameters
-        input_format = data.get('input_format', 'smiles')
-        molecule_data = data.get('data')
-        
-        if not molecule_data:
-            raise ValueError("No molecular data provided")
-            
         # Run analysis
-        fig = run_openbabel_analysis(
-            input_format=input_format,
-            data=molecule_data,
+        fig, pdb_data = run_openbabel_analysis(
+            input_format=data.get('input_format', 'smiles'),
+            data=data.get('data', ''),
             optimize=data.get('optimize', False),
             force_field=data.get('force_field', 'mmff94'),
             steps=data.get('steps', 500)
         )
         
         return jsonify({
+            'plot': fig.to_json(),
+            'pdb_data': pdb_data
+        })
+        
+    except Exception as e:
+        print(f"Error in OpenBabel route: {str(e)}")
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+@app.route('/mdanalysis', methods=['POST'])
+def mdanalysis():
+    try:
+        data = request.get_json()
+        print("Received MDAnalysis request with data:", data)
+        
+        # Extract parameters from data
+        params = {
+            'topology_data': data.get('topology_data'),
+            'trajectory_data': data.get('trajectory_data'),
+            'analysis_type': data.get('analysis_type', 'structure'),
+            'selection': data.get('selection', 'all'),
+            'topology_format': data.get('topology_format', 'pdb'),
+            'trajectory_format': data.get('trajectory_format', 'none')
+        }
+        
+        if not params['topology_data']:
+            raise ValueError("No topology data provided")
+            
+        # Run analysis
+        fig = run_mdanalysis(**params)
+        
+        return jsonify({
             'plot': json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         })
         
     except Exception as e:
-        print(f"Error in OpenBabel analysis: {str(e)}")
+        print(f"Error in MDAnalysis: {str(e)}")
         return jsonify({
             'error': str(e)
         }), 500

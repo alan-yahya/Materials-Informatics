@@ -2,161 +2,127 @@
 <div id="mdanalysis-container" class="container" style="display: none;">
     <div class="controls">
         <form id="mdanalysis-form">
-            <!-- File Inputs -->
             <div class="form-group">
-                <label>Topology File (PDB):</label>
-                <input type="file" id="topology-file" accept=".pdb">
-            </div>
-            <div class="form-group">
-                <label>Trajectory File (DCD):</label>
-                <input type="file" id="trajectory-file" accept=".dcd">
-                <div class="file-info">Optional: Load trajectory for time series analysis</div>
-            </div>
-
-            <!-- Analysis Options -->
-            <div class="form-group">
-                <label>Analysis Type:</label>
-                <select id="analysis-type" onchange="updateAnalysisParams()">
-                    <option value="all">All Analyses</option>
-                    <option value="rdf">Radial Distribution Function</option>
-                    <option value="rmsd">RMSD</option>
-                    <option value="contacts">Contact Analysis</option>
-                    <option value="rg">Radius of Gyration</option>
+                <label>Input Method:</label>
+                <select id="input-method" onchange="toggleInputMethod()">
+                    <option value="file">Upload PDB File</option>
+                    <option value="text">Paste PDB Text</option>
                 </select>
             </div>
 
-            <!-- RDF Parameters -->
-            <div id="rdf-params" class="analysis-params">
-                <h4>RDF Parameters</h4>
-                <div class="form-group">
-                    <label>Selection 1:</label>
-                    <input type="text" id="rdf-sel1" value="name NA" placeholder="e.g., name NA">
-                </div>
-                <div class="form-group">
-                    <label>Selection 2:</label>
-                    <input type="text" id="rdf-sel2" value="name CL" placeholder="e.g., name CL">
-                </div>
-                <div class="form-group">
-                    <label>Number of Bins:</label>
-                    <input type="number" id="rdf-nbins" value="100" min="10" max="500" step="10">
-                </div>
-                <div class="form-group">
-                    <label>Range (Å):</label>
-                    <input type="number" id="rdf-range" value="15" min="5" max="50" step="1">
-                </div>
+            <div class="form-group" id="file-input-section">
+                <label>PDB File:</label>
+                <input type="file" id="pdb-file" accept=".pdb">
+                <p class="description">Upload a PDB file containing molecular structure</p>
             </div>
-
-            <!-- RMSD Parameters -->
-            <div id="rmsd-params" class="analysis-params">
-                <h4>RMSD Parameters</h4>
-                <div class="form-group">
-                    <label>Selection:</label>
-                    <input type="text" id="rmsd-selection" value="protein" placeholder="e.g., protein">
-                </div>
+            
+            <div class="form-group" id="text-input-section" style="display: none;">
+                <label>PDB Data:</label>
+                <textarea id="topology-data" rows="10" placeholder="Paste PDB file content here..."></textarea>
+                <p class="description">Paste the contents of a PDB file</p>
             </div>
-
-            <!-- Contact Analysis Parameters -->
-            <div id="contacts-params" class="analysis-params">
-                <h4>Contact Analysis Parameters</h4>
-                <div class="form-group">
-                    <label>Selection 1:</label>
-                    <input type="text" id="contact-sel1" value="protein" placeholder="e.g., protein">
-                </div>
-                <div class="form-group">
-                    <label>Selection 2:</label>
-                    <input type="text" id="contact-sel2" value="resname LIG" placeholder="e.g., resname LIG">
-                </div>
-                <div class="form-group">
-                    <label>Cutoff (Å):</label>
-                    <input type="number" id="contact-cutoff" value="3.5" min="1.0" max="10.0" step="0.1">
-                </div>
+            
+            <div class="form-group">
+                <label>Analysis Type:</label>
+                <select id="analysis-type">
+                    <option value="structure">Structure Analysis</option>
+                    <option value="contacts">Contact Analysis</option>
+                    <option value="rmsd">RMSD Analysis</option>
+                    <option value="rdf">Radial Distribution Function</option>
+                    <option value="density">Density Analysis</option>
+                </select>
+                <p class="description">
+                    Structure Analysis: Basic structural properties and statistics<br>
+                    Contact Analysis: Atomic contacts and interactions<br>
+                    RMSD Analysis: Root Mean Square Deviation over time<br>
+                    RDF: Radial distribution function between atom groups<br>
+                    Density Analysis: Spatial density distribution
+                </p>
             </div>
-
-            <!-- Radius of Gyration Parameters -->
-            <div id="rg-params" class="analysis-params">
-                <h4>Radius of Gyration Parameters</h4>
-                <div class="form-group">
-                    <label>Selection:</label>
-                    <input type="text" id="rg-selection" value="protein" placeholder="e.g., protein">
-                </div>
+            
+            <div class="form-group">
+                <label>Selection:</label>
+                <input type="text" id="selection" value="all" placeholder="MDAnalysis selection string">
+                <p class="description">
+                    Examples:<br>
+                    "protein" - Select protein atoms<br>
+                    "name CA" - Select alpha carbons<br>
+                    "resname SOL" - Select water molecules<br>
+                    "all" - Select everything
+                </p>
             </div>
-
+            
             <button type="submit">Run Analysis</button>
         </form>
     </div>
     <div id="mdanalysis-plot" class="plot"></div>
 </div>
 
+<style>
+.description {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    padding-left: 10px;
+    border-left: 3px solid #ddd;
+}
+
+textarea {
+    width: 100%;
+    font-family: monospace;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+input[type="file"] {
+    padding: 10px;
+    border: 1px dashed #ddd;
+    border-radius: 3px;
+    width: 100%;
+    margin-bottom: 5px;
+}
+</style>
+
 <script>
-function updateAnalysisParams() {
-    const analysisType = document.getElementById('analysis-type').value;
-    const paramSections = document.getElementsByClassName('analysis-params');
-    
-    // Hide all parameter sections
-    for (let section of paramSections) {
-        section.style.display = 'none';
-    }
-    
-    // Show relevant parameter sections
-    if (analysisType === 'all' || analysisType === 'rdf') {
-        document.getElementById('rdf-params').style.display = 'block';
-    }
-    if (analysisType === 'all' || analysisType === 'rmsd') {
-        document.getElementById('rmsd-params').style.display = 'block';
-    }
-    if (analysisType === 'all' || analysisType === 'contacts') {
-        document.getElementById('contacts-params').style.display = 'block';
-    }
-    if (analysisType === 'all' || analysisType === 'rg') {
-        document.getElementById('rg-params').style.display = 'block';
-    }
+function toggleInputMethod() {
+    const method = document.getElementById('input-method').value;
+    document.getElementById('file-input-section').style.display = 
+        method === 'file' ? 'block' : 'none';
+    document.getElementById('text-input-section').style.display = 
+        method === 'text' ? 'block' : 'none';
 }
 
 document.getElementById('mdanalysis-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Read files
-    const topologyFile = document.getElementById('topology-file').files[0];
-    const trajectoryFile = document.getElementById('trajectory-file').files[0];
+    let topology_data = '';
+    const inputMethod = document.getElementById('input-method').value;
     
-    if (!topologyFile) {
-        alert('Please select a topology file');
-        return;
+    if (inputMethod === 'file') {
+        const fileInput = document.getElementById('pdb-file');
+        if (!fileInput.files[0]) {
+            alert('Please select a PDB file');
+            return;
+        }
+        topology_data = await fileInput.files[0].text();
+    } else {
+        topology_data = document.getElementById('topology-data').value;
+        if (!topology_data.trim()) {
+            alert('Please enter PDB data');
+            return;
+        }
     }
-    
-    // Read file contents
-    const topologyData = await topologyFile.text();
-    const trajectoryData = trajectoryFile ? await trajectoryFile.text() : null;
-    
-    // Get analysis parameters
-    const analysisType = document.getElementById('analysis-type').value;
+
     const data = {
-        topology_data: topologyData,
-        trajectory_data: trajectoryData,
-        analysis_type: analysisType
+        topology_format: 'pdb',
+        topology_data: topology_data,
+        trajectory_format: 'none',
+        trajectory_data: '',
+        analysis_type: document.getElementById('analysis-type').value,
+        selection: document.getElementById('selection').value
     };
-    
-    // Add analysis-specific parameters
-    if (analysisType === 'all' || analysisType === 'rdf') {
-        data.selection1 = document.getElementById('rdf-sel1').value;
-        data.selection2 = document.getElementById('rdf-sel2').value;
-        data.nbins = parseInt(document.getElementById('rdf-nbins').value);
-        data.range = [0, parseFloat(document.getElementById('rdf-range').value)];
-    }
-    
-    if (analysisType === 'all' || analysisType === 'rmsd') {
-        data.rmsd_selection = document.getElementById('rmsd-selection').value;
-    }
-    
-    if (analysisType === 'all' || analysisType === 'contacts') {
-        data.contact_sel1 = document.getElementById('contact-sel1').value;
-        data.contact_sel2 = document.getElementById('contact-sel2').value;
-        data.cutoff = parseFloat(document.getElementById('contact-cutoff').value);
-    }
-    
-    if (analysisType === 'all' || analysisType === 'rg') {
-        data.rg_selection = document.getElementById('rg-selection').value;
-    }
 
     try {
         const response = await fetch('/mdanalysis', {
@@ -170,39 +136,16 @@ document.getElementById('mdanalysis-form').addEventListener('submit', async (e) 
         const result = await response.json();
         if (result.error) {
             console.error('MDAnalysis error:', result.error);
+            alert('Analysis error: ' + result.error);
             return;
         }
-        
-        if (result.plot) {
-            const plotData = JSON.parse(result.plot);
-            Plotly.newPlot('mdanalysis-plot', plotData.data, plotData.layout);
-        }
+        const plotData = JSON.parse(result.plot);
+        Plotly.newPlot('mdanalysis-plot', plotData.data, plotData.layout);
     } catch (error) {
         console.error('Error running MDAnalysis:', error);
+        alert('Error running analysis. Please check the console for details.');
     }
 });
 
-// Initialize parameter visibility
-updateAnalysisParams();</script>
-
-<style>
-.analysis-params {
-    margin: 15px 0;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-.analysis-params h4 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #333;
-}
-
-.file-info {
-    font-size: 0.9em;
-    color: #666;
-    margin-top: 5px;
-}
-</style> 
+// Initialize input method visibility
+toggleInputMethod();</script> 

@@ -80,6 +80,7 @@
     
     <div class="tabs">
         <button class="tab-button" onclick="showTab('openbabel')">OpenBabel</button>
+        <button class="tab-button" onclick="showTab('mdanalysis')">MDAnalysis</button>
         <button class="tab-button" onclick="showTab('quantum')">Quantum</button>
         <button class="tab-button" onclick="showTab('ase')">ASE (Atomic Simulation Environment)</button>
         <button class="tab-button" onclick="showTab('pymatgen')">Pymatgen</button>
@@ -298,6 +299,7 @@
             document.getElementById('ase-container').style.display = 'none';
             document.getElementById('pymatgen-container').style.display = 'none';
             document.getElementById('chemml-container').style.display = 'none';
+            document.getElementById('mdanalysis-container').style.display = 'none';
             
             // Show selected container
             document.getElementById(`${tabName}-container`).style.display = 'block';
