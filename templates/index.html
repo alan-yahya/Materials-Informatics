@@ -79,16 +79,13 @@
     <h1>NanoSimulations</h1>
     
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('classical')">Electromagnetic Trajectory</div>
-        <div class="tab" onclick="switchTab('quantum')">Quantum Orbital</div>
-        <div class="tab" onclick="switchTab('semiclassical')">Semi-Classical</div>
-        <div class="tab" onclick="switchTab('double-slit')">Double Slit</div>
-        <div class="tab" onclick="switchTab('pic')">PIC Simulation</div>
-        <div class="tab" onclick="switchTab('shape')">Shape Optimization</div>
-        <div class="tab" onclick="switchTab('battery')">Battery Simulation</div>
-        <div class="tab" onclick="switchTab('qutip')">QuTiP Dynamics</div>
-        <div class="tab" onclick="switchTab('ase')">Atomistic Simulation</div>
-        <div class="tab" onclick="switchTab('pyvista')">Nanoparticle Visualization</div>
+        <button class="tab-button" onclick="showTab('classical')">Classical</button>
+        <button class="tab-button" onclick="showTab('quantum')">Quantum</button>
+        <button class="tab-button" onclick="showTab('pyvista')">PyVista</button>
+        <button class="tab-button" onclick="showTab('ase')">ASE</button>
+        <button class="tab-button" onclick="showTab('pymatgen')">Pymatgen</button>
+        <button class="tab-button" onclick="showTab('qe')">Quantum ESPRESSO</button>
+        <button class="tab-button" onclick="showTab('chemml')">ChemML</button>
     </div>
 
     <!-- Electromagnetic Trajectory Simulation -->
@@ -321,6 +318,11 @@
 
     {% include 'pyvista.html' %}
 
+    {% include 'pymatgen.html' %}
+
+    {% include 'qe.html' %}
+    {% include 'chemml.html' %}
+
     <script>
         async function loadQutipContainer() {
             const response = await fetch('/qutip_template');
@@ -333,20 +335,27 @@
         // Load QuTiP container when the page loads
         loadQutipContainer();
 
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`.tab:nth-child(${
-                tab === 'classical' ? 1 : 
-                (tab === 'quantum' ? 2 : 
-                (tab === 'semiclassical' ? 3 :
-                (tab === 'double-slit' ? 4 :
-                (tab === 'pic' ? 5 :
-                (tab === 'shape' ? 6 :
-                (tab === 'battery' ? 7 : 8))))))
-            })`).classList.add('active');
+        function showTab(tabName) {
+            // Hide all containers
+            document.getElementById('classical-container').style.display = 'none';
+            document.getElementById('quantum-container').style.display = 'none';
+            document.getElementById('pyvista-container').style.display = 'none';
+            document.getElementById('ase-container').style.display = 'none';
+            document.getElementById('pymatgen-container').style.display = 'none';
+            document.getElementById('qe-container').style.display = 'none';
+            document.getElementById('chemml-container').style.display = 'none';
             
-            document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
-            document.getElementById(`${tab}-container`).style.display = 'grid';
+            // Show selected container
+            document.getElementById(`${tabName}-container`).style.display = 'block';
+            
+            // Update active tab
+            const buttons = document.getElementsByClassName('tab-button');
+            for (let button of buttons) {
+                button.classList.remove('active');
+                if (button.textContent.toLowerCase() === tabName) {
+                    button.classList.add('active');
+                }
+            }
         }
 
         document.getElementById('simulation-form').addEventListener('submit', async (e) => {

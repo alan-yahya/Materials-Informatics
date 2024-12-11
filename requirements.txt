@@ -13,4 +13,9 @@ ase==3.22.1
 gpaw==23.9.1
 pyvista==0.42.3
 vtk==9.2.6
-trame==3.0.1 
+trame==3.0.1
+pymatgen==2023.12.18
+spglib==2.1.0
+monty==2023.9.25
+ase-espresso==0.3.0
+seekpath==2.1.0 

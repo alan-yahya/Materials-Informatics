@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import base64
 from io import BytesIO
+from PIL import Image
 
 class NanoparticleVisualizer:
     def __init__(self):
@@ -116,7 +117,10 @@ class NanoparticleVisualizer:
         
         # Render and capture image
         self.plotter.show(auto_close=False)
-        image = self.plotter.screenshot(return_img=True)
+        image_array = self.plotter.screenshot(return_img=True)
+        
+        # Convert numpy array to PIL Image
+        image = Image.fromarray(image_array)
         
         # Convert image to base64
         buffer = BytesIO()

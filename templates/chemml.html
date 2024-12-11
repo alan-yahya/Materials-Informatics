@@ -1,0 +1,157 @@
+<!-- Chemical Data Analysis -->
+<div id="chemml-container" class="container" style="display: none;">
+    <div class="controls">
+        <form id="chemml-form">
+            <!-- Training Parameters -->
+            <div id="training-params">
+                <div class="form-group">
+                    <label>Model Type:</label>
+                    <select id="model-type">
+                        <option value="mlp">Neural Network (MLP)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Test Size:</label>
+                    <input type="number" id="test-size" value="0.2" min="0.1" max="0.5" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Random State:</label>
+                    <input type="number" id="random-state" value="42" min="0" max="100" step="1">
+                </div>
+                
+                <!-- MLP Parameters -->
+                <div id="mlp-params">
+                    <div class="form-group">
+                        <label>Hidden Layer Sizes:</label>
+                        <input type="text" id="nhidden" value="100,50" placeholder="e.g., 100,50">
+                    </div>
+                    <div class="form-group">
+                        <label>Activation Function:</label>
+                        <select id="activation">
+                            <option value="relu">ReLU</option>
+                            <option value="tanh">Tanh</option>
+                            <option value="sigmoid">Sigmoid</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Learning Rate:</label>
+                        <input type="number" id="learning-rate" value="0.001" min="0.0001" max="0.1" step="0.0001">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit">Train Model</button>
+        </form>
+    </div>
+    <div id="chemml-plot" class="plot"></div>
+    
+    <!-- Results Display -->
+    <div id="feature-importance" class="results-box" style="display: none;">
+        <h3>Feature Importance</h3>
+        <table id="importance-table">
+            <tr>
+                <th>Feature</th>
+                <th>Importance</th>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<script>
+function displayFeatureImportance(importance) {
+    const table = document.getElementById('importance-table');
+    // Clear existing rows except header
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
+    
+    // Add importance rows
+    for (const [feature, value] of Object.entries(importance)) {
+        const row = table.insertRow();
+        const featureCell = row.insertCell();
+        const valueCell = row.insertCell();
+        
+        featureCell.textContent = feature;
+        valueCell.textContent = value.toFixed(4);
+    }
+    
+    // Show results
+    document.getElementById('feature-importance').style.display = 'block';
+}
+
+document.getElementById('chemml-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        analysis_type: 'training',
+        model_type: document.getElementById('model-type').value,
+        test_size: parseFloat(document.getElementById('test-size').value),
+        random_state: parseInt(document.getElementById('random-state').value),
+        nhidden: document.getElementById('nhidden').value,
+        activation: document.getElementById('activation').value,
+        learning_rate: parseFloat(document.getElementById('learning-rate').value)
+    };
+
+    try {
+        const response = await fetch('/chemml', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.error) {
+            console.error('Chemical data analysis error:', result.error);
+            return;
+        }
+        
+        if (result.descriptors) {
+            displayFeatureImportance(result.descriptors);
+        }
+        
+        if (result.plot) {
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('chemml-plot', plotData.data, plotData.layout);
+        }
+    } catch (error) {
+        console.error('Error running chemical data analysis:', error);
+    }
+});</script>
+
+<style>
+.results-box {
+    margin: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.results-box h3 {
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.results-box table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-box th, .results-box td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.results-box th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.results-box tr:hover {
+    background-color: #f5f5f5;
+}
+</style> 

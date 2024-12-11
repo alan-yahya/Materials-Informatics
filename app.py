@@ -16,6 +16,9 @@ from shape_optimization import run_shape_optimization
 from qutip_simulation import run_qutip_simulation
 from ase_simulation import run_ase_simulation
 from pyvista_visualization import run_pyvista_visualization
+from pymatgen_analysis import run_pymatgen_analysis
+from qe_simulation import run_qe_simulation
+from chemml_analysis import run_chemml_analysis
 
 app = Flask(__name__)
 
@@ -331,6 +334,134 @@ def pyvista():
         
     except Exception as e:
         print(f"Error in PyVista route: {str(e)}")
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+@app.route('/pymatgen', methods=['POST'])
+def pymatgen():
+    try:
+        data = request.get_json()
+        print("Received pymatgen request with data:", data)
+        
+        # Get analysis parameters
+        material_type = data.get('material_type', 'bulk')
+        analysis_type = data.get('analysis_type', 'structure')
+        
+        # Get material-specific parameters
+        params = {}
+        if material_type == 'bulk':
+            params['lattice_constant'] = float(data.get('lattice_constant', 3.5))
+            params['species'] = data.get('species', ['Au'])
+        elif material_type == 'surface':
+            params['miller_index'] = tuple(data.get('miller_index', [1, 1, 1]))
+            params['min_slab_size'] = float(data.get('min_slab_size', 10.0))
+            params['min_vacuum_size'] = float(data.get('min_vacuum_size', 10.0))
+        elif material_type == 'nanoparticle':
+            params['radius'] = float(data.get('radius', 10.0))
+            
+        # Get analysis-specific parameters
+        if analysis_type == 'bonding':
+            params['method'] = data.get('method', 'voronoi')
+            
+        print(f"Parameters: material_type={material_type}, analysis_type={analysis_type}, params={params}")
+        
+        # Run analysis
+        fig = run_pymatgen_analysis(
+            material_type=material_type,
+            analysis_type=analysis_type,
+            **params
+        )
+        
+        print("Pymatgen analysis completed successfully")
+        return jsonify({
+            'plot': fig.to_json()
+        })
+        
+    except Exception as e:
+        print(f"Error in pymatgen route: {str(e)}")
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+@app.route('/qe', methods=['POST'])
+def qe():
+    try:
+        data = request.get_json()
+        print("Received QE request with data:", data)
+        
+        # Get simulation parameters
+        structure_type = data.get('structure_type', 'bulk')
+        calculation_type = data.get('calculation_type', 'scf')
+        plot_type = data.get('plot_type', 'structure')
+        
+        # Get structure-specific parameters
+        params = {}
+        if structure_type == 'bulk':
+            params['lattice_constant'] = float(data.get('lattice_constant', 4.0))
+        elif structure_type == 'surface':
+            params['layers'] = int(data.get('layers', 4))
+            params['vacuum'] = float(data.get('vacuum', 10.0))
+        elif structure_type == 'nanoparticle':
+            params['size'] = tuple(data.get('size', [3, 3, 3]))
+            
+        # Get calculation parameters
+        if calculation_type == 'scf':
+            params['kpts'] = tuple(data.get('kpts', [4, 4, 4]))
+            params['ecutwfc'] = float(data.get('ecutwfc', 40.0))
+            params['ecutrho'] = float(data.get('ecutrho', 320.0))
+        elif calculation_type == 'bands':
+            params['kpts'] = tuple(data.get('kpts', [8, 8, 8]))
+            params['bands_points'] = int(data.get('bands_points', 40))
+        elif calculation_type == 'dos':
+            params['kpts'] = tuple(data.get('kpts', [12, 12, 12]))
+            params['width'] = float(data.get('width', 0.2))
+            
+        print(f"Parameters: structure_type={structure_type}, calculation_type={calculation_type}, params={params}")
+        
+        # Run simulation
+        fig = run_qe_simulation(
+            structure_type=structure_type,
+            calculation_type=calculation_type,
+            plot_type=plot_type,
+            **params
+        )
+        
+        print("QE simulation completed successfully")
+        return jsonify({
+            'plot': fig.to_json()
+        })
+        
+    except Exception as e:
+        print(f"Error in QE route: {str(e)}")
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+@app.route('/chemml', methods=['POST'])
+def chemml():
+    try:
+        data = request.get_json()
+        print("Received ChemML request with data:", data)
+        
+        # Get analysis parameters
+        analysis_type = data.get('analysis_type', 'training')
+        
+        # Run analysis
+        fig = run_chemml_analysis(analysis_type, **data)
+        
+        response = {
+            'plot': json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        }
+        
+        # Add molecular descriptors if available
+        if hasattr(fig, 'descriptors'):
+            response['descriptors'] = fig.descriptors
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        print(f"Error in ChemML analysis: {str(e)}")
         return jsonify({
             'error': str(e)
         }), 500
