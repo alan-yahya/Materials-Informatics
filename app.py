@@ -15,7 +15,7 @@ from qutip_simulation import run_qutip_simulation
 from ase_simulation import run_ase_simulation
 from pymatgen_analysis import run_pymatgen_analysis
 from chemml_analysis import run_chemml_analysis
-from openbabel_analysis import run_openbabel_analysis
+from openbabel_analysis import run_openbabel_analysis, compare_molecules
 from mdanalysis_simulation import run_mdanalysis
 
 app = Flask(__name__)
@@ -354,6 +354,37 @@ def mdanalysis():
         
     except Exception as e:
         print(f"Error in MDAnalysis: {str(e)}")
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+@app.route('/openbabel/similarity', methods=['POST'])
+def openbabel_similarity():
+    try:
+        data = request.get_json()
+        print("Received similarity request with data:", data)
+        
+        # Get SMILES strings and fingerprint type
+        smiles1 = data.get('smiles1')
+        smiles2 = data.get('smiles2')
+        fp_type = data.get('fp_type', 'fp2')
+        
+        if not smiles1 or not smiles2:
+            raise ValueError("Both SMILES strings are required")
+            
+        # Calculate similarity and get visualization
+        similarity, fig = compare_molecules(smiles1, smiles2, fp_type)
+        
+        if similarity is None:
+            raise ValueError("Failed to calculate similarity")
+            
+        return jsonify({
+            'similarity': similarity,
+            'plot': fig.to_json() if fig else None
+        })
+        
+    except Exception as e:
+        print(f"Error in similarity calculation: {str(e)}")
         return jsonify({
             'error': str(e)
         }), 500

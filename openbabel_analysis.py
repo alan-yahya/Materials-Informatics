@@ -773,6 +773,138 @@ class MoleculeHandler:
         except Exception as e:
             print(f"Error converting to PDB: {str(e)}")
             return None
+            
+    def calculate_similarity(self, other_mol, fp_type='fp2'):
+        """Calculate molecular similarity using fingerprints."""
+        if self.mol is None or other_mol is None:
+            return None
+        
+        try:
+            # Get fingerprints for both molecules
+            fp1 = self._get_fingerprint(self.mol, fp_type)
+            fp2 = self._get_fingerprint(other_mol, fp_type)
+            
+            if fp1 is None or fp2 is None:
+                return None
+            
+            # Calculate Tanimoto coefficient
+            tanimoto = self._calculate_tanimoto(fp1, fp2)
+            
+            return tanimoto
+            
+        except Exception as e:
+            print(f"Error calculating similarity: {str(e)}")
+            return None
+            
+    def _get_fingerprint(self, mol, fp_type):
+        """Generate molecular fingerprint."""
+        try:
+            if fp_type == 'fp2':
+                return mol.calcfp(fptype='FP2')
+            elif fp_type == 'fp3':
+                return mol.calcfp(fptype='FP3')
+            elif fp_type == 'fp4':
+                return mol.calcfp(fptype='FP4')
+            elif fp_type == 'maccs':
+                return mol.calcfp(fptype='MACCS')
+            else:
+                raise ValueError(f"Unsupported fingerprint type: {fp_type}")
+        except Exception as e:
+            print(f"Error generating fingerprint: {str(e)}")
+            return None
+            
+    def _calculate_tanimoto(self, fp1, fp2):
+        """Calculate Tanimoto coefficient between two fingerprints."""
+        try:
+            return fp1 | fp2
+        except Exception as e:
+            print(f"Error calculating Tanimoto coefficient: {str(e)}")
+            return None
+
+def compare_molecules(smiles1, smiles2, fp_type='fp2'):
+    """Compare two molecules using fingerprint similarity."""
+    try:
+        # Initialize handlers
+        handler1 = MoleculeHandler()
+        handler2 = MoleculeHandler()
+        
+        # Read molecules
+        if not handler1.read_molecule(smiles1, 'smiles') or not handler2.read_molecule(smiles2, 'smiles'):
+            return None, None
+            
+        # Calculate similarity
+        similarity = handler1.calculate_similarity(handler2.mol, fp_type)
+        
+        # Create visualization with 2D structure comparison
+        fig = make_subplots(
+            rows=1, cols=2,
+            subplot_titles=('Molecule 1', 'Molecule 2'),
+            specs=[[{'type': 'scene'}, {'type': 'scene'}]]  # Use 'scene' for 3D plots
+        )
+        
+        # Add 3D structures
+        for i, handler in enumerate([handler1, handler2], 1):
+            coords = np.array([[a.coords[i] for i in range(3)] for a in handler.mol.atoms])
+            elements = [a.type for a in handler.mol.atoms]
+            
+            # Plot atoms
+            fig.add_trace(
+                go.Scatter3d(
+                    x=coords[:, 0], y=coords[:, 1], z=coords[:, 2],
+                    mode='markers',
+                    marker=dict(
+                        size=10,
+                        color=[{'C': 'gray', 'H': 'white', 'O': 'red', 'N': 'blue'}.get(el, 'gray') 
+                               for el in elements],
+                        symbol='circle'
+                    ),
+                    text=elements,
+                    name=f'Atoms (Mol {i})'
+                ),
+                row=1, col=i
+            )
+            
+            # Add bonds
+            for bond in ob.OBMolBondIter(handler.mol.OBMol):
+                begin_idx = bond.GetBeginAtomIdx() - 1
+                end_idx = bond.GetEndAtomIdx() - 1
+                begin_coords = coords[begin_idx]
+                end_coords = coords[end_idx]
+                
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=[begin_coords[0], end_coords[0]],
+                        y=[begin_coords[1], end_coords[1]],
+                        z=[begin_coords[2], end_coords[2]],
+                        mode='lines',
+                        line=dict(color='gray', width=2),
+                        showlegend=False
+                    ),
+                    row=1, col=i
+                )
+        
+        # Update layout
+        fig.update_layout(
+            title=f'Molecular Comparison (Similarity: {similarity:.3f})',
+            height=500,
+            showlegend=True,
+            scene=dict(
+                xaxis_title='X (Å)',
+                yaxis_title='Y (Å)',
+                zaxis_title='Z (Å)'
+            ),
+            scene2=dict(  # Settings for second 3D scene
+                xaxis_title='X (Å)',
+                yaxis_title='Y (Å)',
+                zaxis_title='Z (Å)'
+            )
+        )
+        
+        return similarity, fig
+        
+    except Exception as e:
+        print(f"Error comparing molecules: {str(e)}")
+        return None, None
 
 def run_openbabel_analysis(input_format='smiles', data=None, **kwargs):
     """Run molecular analysis using OpenBabel."""

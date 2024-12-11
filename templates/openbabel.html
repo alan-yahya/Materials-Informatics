@@ -76,6 +76,55 @@
         </div>
     </div>
     <div id="openbabel-plot" class="plot"></div>
+
+    <!-- Molecular Similarity Section -->
+    <div class="similarity-section" style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+        <h3>Molecular Similarity Comparison</h3>
+        <form id="similarity-form">
+            <div class="form-group">
+                <label>First SMILES:</label>
+                <input type="text" id="smiles1" placeholder="Enter first SMILES string">
+                <div class="examples">
+                    Examples:
+                    <button type="button" onclick="setExamplePair(1, 'CC(=O)O')">Acetic acid</button>
+                    <button type="button" onclick="setExamplePair(1, 'c1ccccc1')">Benzene</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Second SMILES:</label>
+                <input type="text" id="smiles2" placeholder="Enter second SMILES string">
+                <div class="examples">
+                    Examples:
+                    <button type="button" onclick="setExamplePair(2, 'CCC(=O)O')">Propionic acid</button>
+                    <button type="button" onclick="setExamplePair(2, 'c1ccccc1C')">Toluene</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Fingerprint Type:</label>
+                <select id="fp-type">
+                    <option value="fp2">FP2 (Path-based)</option>
+                    <option value="fp3">FP3 (Ring-based)</option>
+                    <option value="fp4">FP4 (SMARTS-based)</option>
+                    <option value="maccs">MACCS</option>
+                </select>
+                <p class="description">
+                    FP2: Path-based fingerprint (recommended for similarity)<br>
+                    FP3: Ring-based patterns<br>
+                    FP4: SMARTS-based patterns<br>
+                    MACCS: 166 structural keys
+                </p>
+            </div>
+
+            <button type="submit">Compare Molecules</button>
+        </form>
+        <div id="similarity-results" style="display: none; margin-top: 20px;">
+            <h4>Similarity Results</h4>
+            <div id="similarity-score"></div>
+            <div id="similarity-plot"></div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -152,14 +201,11 @@ function setExample(smiles) {
     document.getElementById('smiles-data').value = smiles;
 }
 
-// Toggle optimization parameters
-document.getElementById('optimize-geometry').addEventListener('change', function() {
-    document.getElementById('optimization-params').style.display = 
-        this.checked ? 'block' : 'none';
-});
+function setExamplePair(input_num, smiles) {
+    document.getElementById(`smiles${input_num}`).value = smiles;
+}
 
-let currentPDBData = null;
-
+// Original OpenBabel form submission
 document.getElementById('openbabel-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -229,23 +275,46 @@ document.getElementById('openbabel-form').addEventListener('submit', async (e) =
     }
 });
 
-// Add download handler
-document.getElementById('download-pdb').addEventListener('click', function() {
-    if (!currentPDBData) return;
+// Similarity form submission
+document.getElementById('similarity-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
     
-    // Create blob and download
-    const blob = new Blob([currentPDBData], { type: 'chemical/x-pdb' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = 'structure.pdb';
-    
-    document.body.appendChild(a);
-    a.click();
-    
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    const data = {
+        smiles1: document.getElementById('smiles1').value,
+        smiles2: document.getElementById('smiles2').value,
+        fp_type: document.getElementById('fp-type').value
+    };
+
+    try {
+        const response = await fetch('/openbabel/similarity', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.error) {
+            console.error('Similarity calculation error:', result.error);
+            return;
+        }
+
+        // Show results section
+        document.getElementById('similarity-results').style.display = 'block';
+        
+        // Display similarity score
+        document.getElementById('similarity-score').innerHTML = 
+            `<p>Tanimoto Similarity Score: <strong>${result.similarity.toFixed(3)}</strong></p>`;
+        
+        // Plot comparison if available
+        if (result.plot) {
+            const plotData = JSON.parse(result.plot);
+            Plotly.newPlot('similarity-plot', plotData.data, plotData.layout);
+        }
+    } catch (error) {
+        console.error('Error calculating similarity:', error);
+    }
 });
 
 // Initialize input field visibility
