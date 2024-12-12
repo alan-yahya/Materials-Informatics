@@ -1,23 +1,22 @@
 name: orbitals
 channels:
   - conda-forge
-  - defaults
+  - openbabel
 dependencies:
   - python=3.9
   - numpy
   - scipy
   - flask
   - plotly
-  - mdanalysis
-  - openbabel
   - chembl_webresource_client
-  - psutil
-  - scikit-learn
-  - pandas
-  - rdkit
+  - mdanalysis
   - ase
   - pymatgen
+  - rdkit
+  - psutil
+  - openbabel
   - pip
   - pip:
+    - scikit-image
     - gunicorn
     - werkzeug
