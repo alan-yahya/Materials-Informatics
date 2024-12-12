@@ -6,7 +6,6 @@ from quantum_orbitals import (
     create_atom, calculate_orbital_wavefunction, plot_orbital_density,
     get_available_atoms, get_available_basis_sets
 )
-from qutip_simulation import run_qutip_simulation
 from ase_simulation import run_ase_simulation
 from pymatgen_analysis import run_pymatgen_analysis
 from chemml_analysis import run_chemml_analysis
@@ -150,45 +149,6 @@ def quantum_orbital():
     return jsonify({
         'plot': fig.to_json()
     })
-
-@app.route('/qutip_template')
-def qutip_template():
-    return render_template('qutip.html')
-
-@app.route('/qutip', methods=['POST'])
-def qutip():
-    try:
-        data = request.get_json()
-        print("Received QuTiP request with data:", data)  # Debug log
-        
-        # Get simulation parameters
-        n_levels = int(data.get('n_levels', 3))
-        gamma = float(data.get('gamma', 0.1))
-        omega = float(data.get('omega', 1.0))
-        t_max = float(data.get('t_max', 10.0))
-        n_steps = int(data.get('n_steps', 200))
-        
-        print(f"Parameters: n_levels={n_levels}, gamma={gamma}, omega={omega}, t_max={t_max}, n_steps={n_steps}")  # Debug log
-        
-        # Run simulation
-        fig = run_qutip_simulation(
-            n_levels=n_levels,
-            gamma=gamma,
-            omega=omega,
-            t_max=t_max,
-            n_steps=n_steps
-        )
-        
-        print("Simulation completed successfully")  # Debug log
-        response = jsonify({'plot': fig.to_json()})
-        print("Response created")  # Debug log
-        return response
-        
-    except Exception as e:
-        print(f"Error in QuTiP route: {str(e)}")  # Debug log
-        return jsonify({
-            'error': str(e)
-        }), 500
 
 @app.route('/ase', methods=['POST'])
 def ase():
