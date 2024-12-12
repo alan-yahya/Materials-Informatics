@@ -4,12 +4,14 @@ FROM continuumio/miniconda3:latest
 # Set working directory
 WORKDIR /app
 
-# Copy environment files
-COPY environment.yml requirements.txt ./
-
-# Create conda environment
-RUN conda env create -f environment.yml && \
+# Create conda environment with exact packages
+RUN conda create -n orbitals python=3.9 numpy scipy flask plotly chembl_webresource_client mdanalysis ase pymatgen rdkit psutil -c conda-forge && \
     conda clean -afy
+
+# Install additional packages in specific order
+SHELL ["conda", "run", "-n", "orbitals", "/bin/bash", "-c"]
+RUN pip install scikit-image gunicorn && \
+    conda install -c openbabel openbabel
 
 # Copy application files
 COPY . .
@@ -17,10 +19,6 @@ COPY . .
 # Create uploads directory
 RUN mkdir -p uploads && \
     chmod 777 uploads
-
-# Activate conda environment and install additional requirements
-SHELL ["conda", "run", "-n", "orbitals", "/bin/bash", "-c"]
-RUN pip install -r requirements.txt gunicorn
 
 # Expose port
 EXPOSE 8000
