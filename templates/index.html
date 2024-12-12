@@ -103,15 +103,15 @@
         <button class="tab-button" onclick="showTab('chembl')">ChEMBL Lookup</button>
         <button class="tab-button" onclick="showTab('chemml')">ChemML</button>
         <button class="tab-button" onclick="showTab('mdanalysis')">MDAnalysis</button>
-        <button class="tab-button" onclick="showTab('quantum')">Quantum</button>
         <button class="tab-button" onclick="showTab('ase')">Atomic Simulation Environment</button>
         <button class="tab-button" onclick="showTab('pymatgen')">Pymatgen</button>
+        <button class="tab-button" onclick="showTab('quantum')">Quantum</button>
     </div>
 
     <!-- Quantum Orbital Simulation -->
     <div id="quantum-container" class="container" style="display: none;">
         <div class="info-box" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #17a2b8; border-radius: 4px;">
-            <h4>About This Simulation</h4>
+            <h4>About (SciPy Simulation)</h4>
             <p>This is a simplified visualization of atomic orbitals using the hydrogen-like atom approximation. Important differences from real quantum mechanical calculations:</p>
             <ul>
                 <li><strong>Approximations Used:</strong> 
@@ -126,7 +126,6 @@
                     (including phase information and probability currents).
                 </li>
             </ul>
-            <p><small>This simulation is intended for educational purposes to help visualize the general shape and symmetry of atomic orbitals.</small></p>
         </div>
         <div class="controls">
             <form id="quantum-form">
