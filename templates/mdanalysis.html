@@ -4,13 +4,132 @@
         <form id="mdanalysis-form" enctype="multipart/form-data">
             <div class="form-group">
                 <label>Upload PDB File:</label>
-                <input type="file" id="mdanalysis-file" name="file" accept=".pdb" required>
+                <input type="file" id="pdb-file" name="file" accept=".pdb">
             </div>
+            <!-- Analysis Options -->
+            <div class="analysis-options">
+                <h4>Analysis Options</h4>
+                
+                <div class="form-group">
+                    <label>Structure Analysis:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="analyze-secondary" checked>
+                        <label for="analyze-secondary">Secondary Structure</label>
+                        
+                        <input type="checkbox" id="analyze-contacts" checked>
+                        <label for="analyze-contacts">Contact Analysis</label>
+                        
+                        <input type="checkbox" id="analyze-rmsd" checked>
+                        <label for="analyze-rmsd">RMSD Calculation</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Contact Analysis Settings:</label>
+                    <div class="input-group">
+                        <label for="contact-cutoff">Contact Cutoff (Å):</label>
+                        <input type="number" id="contact-cutoff" value="6.0" min="1.0" max="20.0" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Visualization Options:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="show-backbone" checked>
+                        <label for="show-backbone">Show Backbone</label>
+                        
+                        <input type="checkbox" id="show-sidechains">
+                        <label for="show-sidechains">Show Sidechains</label>
+                        
+                        <input type="checkbox" id="show-hydrogens">
+                        <label for="show-hydrogens">Show Hydrogens</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Color Scheme:</label>
+                    <select id="color-scheme">
+                        <option value="element">By Element</option>
+                        <option value="chain">By Chain</option>
+                        <option value="residue">By Residue Type</option>
+                        <option value="secondary">By Secondary Structure</option>
+                        <option value="bfactor">By B-factor</option>
+                    </select>
+                </div>
+            </div>
+
             <button type="submit">Analyze Structure</button>
         </form>
-        <div id="mdanalysis-results" style="margin-top: 20px; white-space: pre-wrap;"></div>
+        <div id="mdanalysis-results"></div>
     </div>
-    <div id="mdanalysis-plot" class="plot"></div>
+
+    <style>
+    .analysis-options {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
+    
+    .analysis-options h4 {
+        margin-top: 0;
+        color: #2196F3;
+        border-bottom: 2px solid #2196F3;
+        padding-bottom: 5px;
+    }
+    
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 5px 0;
+    }
+    
+    .input-group input[type="number"] {
+        width: 100px;
+    }
+    
+    select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: white;
+    }
+    
+    .info-section {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    .info-section h4 {
+        color: #2196F3;
+        margin-top: 0;
+        border-bottom: 2px solid #2196F3;
+        padding-bottom: 5px;
+    }
+    
+    .composition {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .chain-info {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .chain-info h5 {
+        margin: 0 0 10px 0;
+        color: #2196F3;
+    }
+    </style>
 </div>
 
 <script>
@@ -18,8 +137,18 @@ document.getElementById('mdanalysis-form').addEventListener('submit', async (e) 
     e.preventDefault();
     
     const formData = new FormData();
-    const fileInput = document.getElementById('mdanalysis-file');
+    const fileInput = document.getElementById('pdb-file');
     formData.append('file', fileInput.files[0]);
+
+    // Add analysis options to form data
+    formData.append('analyze_secondary', document.getElementById('analyze-secondary').checked);
+    formData.append('analyze_contacts', document.getElementById('analyze-contacts').checked);
+    formData.append('analyze_rmsd', document.getElementById('analyze-rmsd').checked);
+    formData.append('contact_cutoff', document.getElementById('contact-cutoff').value);
+    formData.append('show_backbone', document.getElementById('show-backbone').checked);
+    formData.append('show_sidechains', document.getElementById('show-sidechains').checked);
+    formData.append('show_hydrogens', document.getElementById('show-hydrogens').checked);
+    formData.append('color_scheme', document.getElementById('color-scheme').value);
 
     try {
         const response = await fetch('/mdanalysis', {
@@ -34,8 +163,113 @@ document.getElementById('mdanalysis-form').addEventListener('submit', async (e) 
             return;
         }
 
-        // Display the analysis results
-        document.getElementById('mdanalysis-results').innerHTML = result.results;
+        // Create results HTML
+        let resultsHtml = '<div class="analysis-results">';
+        
+        // Add basic info
+        if (result.basic_info) {
+            resultsHtml += `
+                <h3>Basic Information</h3>
+                <div class="info-section">
+                    <h4>General Statistics</h4>
+                    <ul>
+                        <li>Number of atoms: ${result.basic_info.n_atoms}</li>
+                        <li>Number of residues: ${result.basic_info.n_residues}</li>
+                        <li>Number of segments: ${result.basic_info.n_segments}</li>
+                        <li>Number of bonds: ${result.basic_info.n_bonds}</li>
+                        <li>Radius of gyration: ${result.basic_info.radius_of_gyration.toFixed(2)} Å</li>
+                        <li>Total mass: ${result.basic_info.total_mass.toFixed(2)} Da</li>
+                        <li>Total charge: ${result.basic_info.total_charge.toFixed(2)} e</li>
+                    </ul>
+                </div>
+                
+                <div class="info-section">
+                    <h4>Structure Type</h4>
+                    <ul>
+                        <li>Contains protein: ${result.basic_info.is_protein ? 'Yes' : 'No'}</li>
+                        <li>Contains nucleic acids: ${result.basic_info.has_nucleic ? 'Yes' : 'No'}</li>
+                        <li>Contains water: ${result.basic_info.has_water ? 'Yes' : 'No'}</li>
+                    </ul>
+                </div>
+                
+                <div class="info-section">
+                    <h4>Dimensions</h4>
+                    <ul>
+                        <li>X: ${result.basic_info.dimensions.x.toFixed(2)} Å</li>
+                        <li>Y: ${result.basic_info.dimensions.y.toFixed(2)} Å</li>
+                        <li>Z: ${result.basic_info.dimensions.z.toFixed(2)} Å</li>
+                    </ul>
+                </div>
+                
+                <div class="info-section">
+                    <h4>Chain Information</h4>
+                    ${Object.entries(result.basic_info.chain_info).map(([chain, info]) => `
+                        <div class="chain-info">
+                            <h5>Chain ${chain}</h5>
+                            <ul>
+                                <li>Residues: ${info.n_residues}</li>
+                                <li>Atoms: ${info.n_atoms}</li>
+                                <li>Residue range: ${info.residue_range}</li>
+                            </ul>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="info-section">
+                    <h4>Composition</h4>
+                    <div class="composition">
+                        <div class="atom-types">
+                            <h5>Atom Types</h5>
+                            <ul>
+                                ${Object.entries(result.basic_info.atom_types)
+                                    .map(([atom, count]) => `<li>${atom}: ${count}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="residue-types">
+                            <h5>Residue Types</h5>
+                            <ul>
+                                ${Object.entries(result.basic_info.residue_types)
+                                    .map(([res, count]) => `<li>${res}: ${count}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Add warnings and errors
+        if (result.warnings && result.warnings.length > 0) {
+            resultsHtml += `
+                <div class="warnings">
+                    <h4>Warnings</h4>
+                    <ul>${result.warnings.map(w => `<li>${w}</li>`).join('')}</ul>
+                </div>
+            `;
+        }
+        
+        if (result.errors && result.errors.length > 0) {
+            resultsHtml += `
+                <div class="errors">
+                    <h4>Errors</h4>
+                    <ul>${result.errors.map(e => `<li>${e}</li>`).join('')}</ul>
+                </div>
+            `;
+        }
+        
+        resultsHtml += '</div>';
+        
+        // Display results
+        document.getElementById('mdanalysis-results').innerHTML = resultsHtml;
+        
+        // Display plots
+        if (result.plots && result.plots.length > 0) {
+            result.plots.forEach((plotJson, index) => {
+                const plotDiv = document.createElement('div');
+                plotDiv.id = `plot-${index}`;
+                document.getElementById('mdanalysis-results').appendChild(plotDiv);
+                Plotly.newPlot(`plot-${index}`, JSON.parse(plotJson));
+            });
+        }
         
         // Clear the file input
         fileInput.value = '';

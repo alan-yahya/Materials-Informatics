@@ -353,23 +353,26 @@ def mdanalysis():
                 file.save(filepath)
                 temp_file = filepath  # Store filepath for cleanup
                 
-                # Redirect stdout to capture print statements
-                import io
-                import sys
-                output = io.StringIO()
-                sys.stdout = output
+                # Get analysis options from request
+                options = {
+                    'analyze_secondary': request.form.get('analyze_secondary', 'true').lower() == 'true',
+                    'analyze_contacts': request.form.get('analyze_contacts', 'true').lower() == 'true',
+                    'analyze_rmsd': request.form.get('analyze_rmsd', 'true').lower() == 'true',
+                    'contact_cutoff': float(request.form.get('contact_cutoff', 6.0)),
+                    'show_backbone': request.form.get('show_backbone', 'true').lower() == 'true',
+                    'show_sidechains': request.form.get('show_sidechains', 'false').lower() == 'true',
+                    'show_hydrogens': request.form.get('show_hydrogens', 'false').lower() == 'true',
+                    'color_scheme': request.form.get('color_scheme', 'element')
+                }
                 
-                # Run the analysis
-                run_basic_analysis(filepath)
+                # Run the analysis with options
+                results = run_basic_analysis(filepath, options)
                 
-                # Restore stdout and get the captured output
-                sys.stdout = sys.__stdout__
-                analysis_results = output.getvalue()
+                # Convert plots to JSON
+                if results.get('plots'):
+                    results['plots'] = [plot.to_json() for plot in results['plots']]
                 
-                return jsonify({
-                    'success': True,
-                    'results': analysis_results
-                })
+                return jsonify(results)
                 
             finally:
                 # Clean up the uploaded file
