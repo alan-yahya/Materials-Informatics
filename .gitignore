@@ -1,3 +1,9 @@
+# Aider files and directories
+.aider*
+.aider.tags.cache.v3/
+.aider.input.history
+.aider.chat.history.md
+
 # Python
 __pycache__/
 *.py[cod]
@@ -94,4 +100,8 @@ config.local.py
 docs/_build/
 docs/api/
 _docs/
-site/ 
+site/
+
+# Uploads directory
+uploads/
+*.pdb 

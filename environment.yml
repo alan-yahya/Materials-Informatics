@@ -8,7 +8,6 @@ dependencies:
   - scipy
   - flask
   - plotly
-  - qutip
   - mdanalysis
   - openbabel
   - chembl_webresource_client
