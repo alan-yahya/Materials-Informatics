@@ -22,28 +22,40 @@
                 <div class="form-group">
                     <label>Structure Analysis:</label>
                     <div class="checkbox-group">
-                        <input type="checkbox" id="analyze-secondary" checked>
-                        <label for="analyze-secondary">Secondary Structure</label>
+                        <label>
+                            <input type="checkbox" id="analyze-secondary" checked>
+                            Secondary Structure
+                        </label>
                         
-                        <input type="checkbox" id="analyze-contacts" checked>
-                        <label for="analyze-contacts">Contact Analysis</label>
+                        <label>
+                            <input type="checkbox" id="analyze-contacts" checked>
+                            Contact Analysis
+                        </label>
                         
-                        <input type="checkbox" id="analyze-rmsd" checked>
-                        <label for="analyze-rmsd">RMSD Calculation</label>
+                        <label>
+                            <input type="checkbox" id="analyze-rmsd" checked>
+                            RMSD Calculation
+                        </label>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label>Visualization Options:</label>
                     <div class="checkbox-group">
-                        <input type="checkbox" id="show-backbone" checked>
-                        <label for="show-backbone">Show Backbone</label>
+                        <label>
+                            <input type="checkbox" id="show-backbone" checked>
+                            Show Backbone
+                        </label>
                         
-                        <input type="checkbox" id="show-sidechains">
-                        <label for="show-sidechains">Show Sidechains</label>
+                        <label>
+                            <input type="checkbox" id="show-sidechains">
+                            Show Sidechains
+                        </label>
                         
-                        <input type="checkbox" id="show-hydrogens">
-                        <label for="show-hydrogens">Show Hydrogens</label>
+                        <label>
+                            <input type="checkbox" id="show-hydrogens">
+                            Show Hydrogens
+                        </label>
                     </div>
                 </div>
                 
@@ -129,6 +141,27 @@
     .chain-info h5 {
         margin: 0 0 10px 0;
         color: #2196F3;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 10px 0;
+    }
+    
+    .checkbox-group label {
+        display: flex;
+        align-items: center;
+        margin: 0;
+        cursor: pointer;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        margin: 0;
+        margin-right: 8px;
+        width: auto;  /* Override any global input width */
+        cursor: pointer;
     }
     </style>
 </div>

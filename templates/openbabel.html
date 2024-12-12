@@ -53,7 +53,12 @@
             <!-- Analysis Options -->
             <div class="form-group">
                 <label>Optimize Geometry:</label>
-                <input type="checkbox" id="optimize-geometry">
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="optimize-geometry">
+                        Run Geometry Optimization
+                    </label>
+                </div>
             </div>
 
             <div id="optimization-params" style="display: none;">
@@ -156,15 +161,21 @@
             </div>
 
             <div class="form-group">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="check-mass-balance" checked>
-                    <label for="check-mass-balance">Check Mass Balance</label>
+                <div class="checkbox-group horizontal">
+                    <label>
+                        <input type="checkbox" id="check-mass-balance" checked>
+                        Check Mass Balance
+                    </label>
                     
-                    <input type="checkbox" id="check-atom-mapping" checked>
-                    <label for="check-atom-mapping">Validate Atom Mapping</label>
+                    <label>
+                        <input type="checkbox" id="check-atom-mapping" checked>
+                        Validate Atom Mapping
+                    </label>
                     
-                    <input type="checkbox" id="check-valence" checked>
-                    <label for="check-valence">Check Valence Rules</label>
+                    <label>
+                        <input type="checkbox" id="check-valence" checked>
+                        Check Valence Rules
+                    </label>
                 </div>
             </div>
 
@@ -232,19 +243,33 @@ textarea {
 .checkbox-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     margin: 10px 0;
 }
 
 .checkbox-group label {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     margin: 0;
+    cursor: pointer;
 }
 
 .checkbox-group input[type="checkbox"] {
-    margin: 0 8px 0 0;
-    vertical-align: middle;
+    margin: 0;
+    margin-right: 8px;
+    width: auto;  /* Override any global input width */
+    cursor: pointer;
+}
+
+/* Update the reaction section checkboxes */
+.checkbox-group.horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.checkbox-group.horizontal label {
+    min-width: 200px;
 }
 
 .validation-result {
