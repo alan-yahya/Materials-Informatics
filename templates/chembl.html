@@ -1,22 +1,146 @@
-<div id="chembl-container" class="container" style="display: none;">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="controls">
-                <form id="chembl-search-form" class="mb-3">
-                    <div class="form-group">
-                        <label for="smiles-input">SMILES String:</label>
-                        <input type="text" id="smiles-input" class="form-control" 
-                               placeholder="Enter SMILES string (e.g., CCO)" required>
-                        <small class="form-text text-muted">Example SMILES: CCO (ethanol), c1ccccc1 (benzene)</small>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChEMBL Molecule Identifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding-top: 50px; }
+        .molecule-card { margin-bottom: 30px; }
+        .property-section { margin-bottom: 20px; }
+        .property-section h6 { 
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">ChEMBL Molecule Identifier</h1>
+        
+        <form method="POST" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="smiles" class="form-control" 
+                       placeholder="Enter SMILES string (e.g., CCO)" 
+                       value="{{ smiles or '' }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+            <small class="text-muted">Example SMILES: CCO (ethanol), c1ccccc1 (benzene), CC(=O)OC1=CC=CC=C1C(=O)O (aspirin)</small>
+        </form>
+        
+        {% if smiles %}
+            <h2 class="mb-4">Search Results for SMILES: {{ smiles }}</h2>
+            
+            {% if results %}
+                {% for molecule in results %}
+                <div class="card molecule-card">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">{{ molecule['Preferred Name'] or 'Unnamed Molecule' }}</h4>
+                        
+                        <!-- Basic Information -->
+                        <div class="property-section">
+                            <h6>Basic Information</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p><strong>ChEMBL ID:</strong> {{ molecule['ChEMBL ID'] }}</p>
+                                    <p><strong>Molecule Type:</strong> {{ molecule['Molecule Type'] }}</p>
+                                    <p><strong>Max Phase:</strong> {{ molecule['Max Phase'] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>First Approval:</strong> {{ molecule['First Approval'] }}</p>
+                                    <p><strong>Natural Product:</strong> {{ molecule['Natural Product'] }}</p>
+                                    <p><strong>Chirality:</strong> {{ molecule['Chirality'] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>Prodrug:</strong> {{ molecule['Prodrug'] }}</p>
+                                    <p><strong>Black Box Warning:</strong> {{ molecule['Black Box Warning'] }}</p>
+                                    <p><strong>Inorganic Flag:</strong> {{ molecule['Inorganic Flag'] }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Structural Properties -->
+                        <div class="property-section">
+                            <h6>Structural Properties</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p><strong>Molecular Formula:</strong> {{ molecule['Molecular Formula'] }}</p>
+                                    <p><strong>Molecular Weight:</strong> {{ molecule['Molecular Weight'] }}</p>
+                                    <p><strong>Heavy Atoms:</strong> {{ molecule['Heavy Atoms'] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>ALOGP:</strong> {{ molecule['ALOGP'] }}</p>
+                                    <p><strong>PSA:</strong> {{ molecule['PSA'] }}</p>
+                                    <p><strong>Aromatic Rings:</strong> {{ molecule['Aromatic Rings'] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>HBA:</strong> {{ molecule['HBA'] }}</p>
+                                    <p><strong>HBD:</strong> {{ molecule['HBD'] }}</p>
+                                    <p><strong>RTB:</strong> {{ molecule['RTB'] }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Drug-likeness Properties -->
+                        <div class="property-section">
+                            <h6>Drug-likeness Properties</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p><strong>QED Weighted:</strong> {{ molecule['QED Weighted'] }}</p>
+                                    <p><strong>Ro3 Pass:</strong> {{ molecule['Ro3 Pass'] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>CX LogP:</strong> {{ molecule['CX LogP'] }}</p>
+                                    <p><strong>Ro5 Pass:</strong> {{ molecule['Ro5 Pass'] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>CX LogD:</strong> {{ molecule['CX LogD'] }}</p>
+                                    <p><strong>Molecular Species:</strong> {{ molecule['Molecular Species'] }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Structural Representations -->
+                        <div class="property-section">
+                            <h6>Structural Representations</h6>
+                            <div class="row">
+                                <div class="col-12">
+                                    <p><strong>Canonical SMILES:</strong> {{ molecule['Canonical SMILES'] }}</p>
+                                    <p><strong>Standard InChI Key:</strong> {{ molecule['Standard InChI Key'] }}</p>
+                                    <p><strong>Standard InChI:</strong> {{ molecule['Standard InChI'] }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Withdrawal Information -->
+                        {% if molecule['Withdrawn Flag'] != 'N/A' and molecule['Withdrawn Flag'] %}
+                        <div class="property-section">
+                            <h6>Withdrawal Information</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p><strong>Withdrawn Year:</strong> {{ molecule['Withdrawn Year'] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>Withdrawn Country:</strong> {{ molecule['Withdrawn Country'] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>Withdrawn Reason:</strong> {{ molecule['Withdrawn Reason'] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
-                    <button type="submit" class="btn btn-primary mt-3 w-100">Search ChEMBL</button>
-                </form>
-            </div>
-        </div>
-        <div class="col-md-8">
-            <div id="chembl-results" class="mt-4">
-                <!-- Results will be dynamically inserted here -->
-            </div>
-        </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-warning">
+                    No ChEMBL molecules found for the given SMILES string.
+                </div>
+            {% endif %}
+        {% endif %}
     </div>
-</div> 
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

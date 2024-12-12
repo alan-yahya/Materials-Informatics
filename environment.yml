@@ -1,30 +1,18 @@
-name: orbital-sim
+name: orbitals
 channels:
   - conda-forge
   - defaults
 dependencies:
   - python=3.9
-  - numpy=1.24.3
-  - scipy=1.10.1
-  - pandas=2.0.3
-  - scikit-image=0.21.0
-  - pillow=9.5.0
-  - networkx=3.1
-  - imageio=2.31.1
-  - flask=2.3.3
-  - plotly=5.15.0
-  - qutip=4.7.3
-  - ase=3.22.1
-  - gpaw=23.9.1
-  - pyvista=0.42.3
-  - vtk=9.2.6
-  - trame=3.0.1
-  - pymatgen=2023.12.18
-  - spglib=2.1.0
-  - monty=2023.9.25
-  - quantum-espresso=7.2
-  - ase-espresso=0.3.0
-  - seekpath=2.1.0
-  - pip=23.2.1
+  - numpy
+  - scipy
+  - flask
+  - plotly
+  - qutip
+  - mdanalysis
+  - openbabel
+  - chembl_webresource_client
+  - psutil
+  - pip
   - pip:
-    - dash==2.11.1 
+    - werkzeug 

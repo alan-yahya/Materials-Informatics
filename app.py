@@ -19,12 +19,114 @@ from openbabel_analysis import run_openbabel_analysis, compare_molecules, analyz
 from mdanalysis_simulation import run_basic_analysis
 from werkzeug.utils import secure_filename
 import os
+from chembl_webresource_client.new_client import new_client
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+class MoleculeIdentifier:
+    def __init__(self):
+        # Initialize molecule client
+        self.molecule_client = new_client.molecule
+
+    def get_detailed_molecule_info(self, chembl_id):
+        """
+        Retrieve detailed information for a specific ChEMBL molecule
+        """
+        try:
+            # Fetch full molecule details
+            molecule = self.molecule_client.get(chembl_id)
+            
+            if not molecule:
+                return None
+            
+            # Extract all available properties
+            mol_props = molecule.get('molecule_properties', {}) or {}
+            mol_structures = molecule.get('molecule_structures', {}) or {}
+            
+            detailed_info = {
+                # Basic Information
+                'ChEMBL ID': molecule.get('molecule_chembl_id', 'N/A'),
+                'Preferred Name': molecule.get('pref_name', 'N/A'),
+                'Molecule Type': molecule.get('molecule_type', 'N/A'),
+                'Max Phase': molecule.get('max_phase', 'N/A'),
+                'First Approval': molecule.get('first_approval', 'N/A'),
+                'Oral': molecule.get('oral', 'N/A'),
+                'Parenteral': molecule.get('parenteral', 'N/A'),
+                'Topical': molecule.get('topical', 'N/A'),
+                'Black Box Warning': molecule.get('black_box_warning', 'N/A'),
+                'Natural Product': molecule.get('natural_product', 'N/A'),
+                'First in Class': molecule.get('first_in_class', 'N/A'),
+                'Chirality': molecule.get('chirality', 'N/A'),
+                'Prodrug': molecule.get('prodrug', 'N/A'),
+                'Inorganic Flag': molecule.get('inorganic_flag', 'N/A'),
+                
+                # Structural Properties
+                'Molecular Formula': mol_props.get('full_molformula', 'N/A'),
+                'Molecular Weight': mol_props.get('full_mwt', 'N/A'),
+                'ALOGP': mol_props.get('alogp', 'N/A'),
+                'RTB': mol_props.get('rtb', 'N/A'),
+                'PSA': mol_props.get('psa', 'N/A'),
+                'HBA': mol_props.get('hba', 'N/A'),
+                'HBD': mol_props.get('hbd', 'N/A'),
+                'Heavy Atoms': mol_props.get('heavy_atoms', 'N/A'),
+                'Aromatic Rings': mol_props.get('aromatic_rings', 'N/A'),
+                'Structure Type': mol_props.get('structure_type', 'N/A'),
+                
+                # Drug-likeness Properties
+                'QED Weighted': mol_props.get('qed_weighted', 'N/A'),
+                'CX LogP': mol_props.get('cx_logp', 'N/A'),
+                'CX LogD': mol_props.get('cx_logd', 'N/A'),
+                'Molecular Species': mol_props.get('molecular_species', 'N/A'),
+                'Ro3 Pass': mol_props.get('ro3_pass', 'N/A'),
+                'Ro5 Pass': mol_props.get('num_ro5_violations', 'N/A'),
+                
+                # Structural Representations
+                'Canonical SMILES': mol_structures.get('canonical_smiles', 'N/A'),
+                'Standard InChI': mol_structures.get('standard_inchi', 'N/A'),
+                'Standard InChI Key': mol_structures.get('standard_inchi_key', 'N/A'),
+                'MOLFILE': mol_structures.get('molfile', 'N/A'),
+                
+                # Additional Properties
+                'Availability Type': molecule.get('availability_type', 'N/A'),
+                'Cross References': molecule.get('cross_references', 'N/A'),
+                'Synonyms': molecule.get('molecule_synonyms', []),
+                'Helm Notation': molecule.get('helm_notation', 'N/A'),
+                'Biotherapeutic': molecule.get('biotherapeutic', {}),
+                'Withdrawn Flag': molecule.get('withdrawn_flag', 'N/A'),
+                'Withdrawn Reason': molecule.get('withdrawn_reason', 'N/A'),
+                'Withdrawn Country': molecule.get('withdrawn_country', 'N/A'),
+                'Withdrawn Year': molecule.get('withdrawn_year', 'N/A')
+            }
+            
+            return detailed_info
+        
+        except Exception as e:
+            print(f"Error retrieving detailed molecule info: {e}")
+            return None
+
+    def get_chembl_ids_from_smiles(self, smiles):
+        """
+        Retrieve ChEMBL IDs for a given SMILES string
+        """
+        try:
+            results = self.molecule_client.filter(molecule_structures__canonical_smiles__flexmatch=smiles)
+            detailed_matches = []
+            for mol in results:
+                chembl_id = mol.get('molecule_chembl_id')
+                detailed_info = self.get_detailed_molecule_info(chembl_id)
+                if detailed_info:
+                    detailed_matches.append(detailed_info)
+            return detailed_matches
+        except Exception as e:
+            print(f"Error searching for SMILES: {e}")
+            return []
+
+# Initialize molecule identifier after app creation
+molecule_identifier = MoleculeIdentifier()
 
 @app.route('/')
 def index():
@@ -459,6 +561,52 @@ def openbabel_reaction():
         return jsonify({
             'error': str(e)
         }), 500
+
+@app.route('/chembl', methods=['GET', 'POST'])
+def chembl():
+    """
+    Route to handle SMILES input and display results
+    """
+    results = None
+    smiles = None
+    
+    if request.method == 'POST':
+        # Get SMILES from form submission
+        smiles = request.form.get('smiles', '').strip()
+        
+        if smiles:
+            # Perform SMILES lookup
+            results = molecule_identifier.get_chembl_ids_from_smiles(smiles)
+    
+    return render_template('chembl.html', results=results, smiles=smiles)
+
+@app.route('/api/molecule', methods=['GET'])
+def molecule_api():
+    """
+    API endpoint for SMILES lookup
+    """
+    smiles = request.args.get('smiles', '').strip()
+    
+    if not smiles:
+        return jsonify({
+            'error': 'No SMILES string provided',
+            'status': 'error'
+        }), 400
+    
+    results = molecule_identifier.get_chembl_ids_from_smiles(smiles)
+    
+    if results:
+        return jsonify({
+            'status': 'success',
+            'smiles': smiles,
+            'matches': results
+        })
+    else:
+        return jsonify({
+            'status': 'no_matches',
+            'smiles': smiles,
+            'message': 'No ChEMBL molecules found for the given SMILES string'
+        }), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
