@@ -1,6 +1,6 @@
 # Materials Informatics
 
-A suite of simulation/screening tools to cross-validate data from literature mining. Deployed as a flask app using multiple scientific Python libraries with cross-talk for materials/cheminformatics.
+A suite of molecular simulation tools to cross-validate data from literature mining. Deployed as a flask app using multiple scientific Python libraries with cross-talk for materials informatics.
 
 ## Implemented Modules
 
