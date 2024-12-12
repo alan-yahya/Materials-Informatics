@@ -28,9 +28,9 @@
                 <div class="form-group">
                     <label>Example Molecules:</label>
                     <div class="example-buttons">
-                        <button type="button" onclick="setExample('CC(=O)O')">Acetic Acid</button>
-                        <button type="button" onclick="setExample('c1ccccc1')">Benzene</button>
-                        <button type="button" onclick="setExample('CCO')">Ethanol</button>
+                        <button type="button" class="example-btn" data-smiles="CC(=O)O">Acetic Acid</button>
+                        <button type="button" class="example-btn" data-smiles="c1ccccc1">Benzene</button>
+                        <button type="button" class="example-btn" data-smiles="CCO">Ethanol</button>
                     </div>
                 </div>
             </div>
@@ -48,9 +48,13 @@
 </div>
 
 <script>
-function setExample(smiles) {
-    document.getElementById('input-data').value = smiles;
-}
+// Add event listeners for example buttons
+document.querySelectorAll('.example-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const smiles = this.getAttribute('data-smiles');
+        document.getElementById('input-data').value = smiles;
+    });
+});
 
 document.getElementById('chemml-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -109,15 +113,16 @@ function displayProperties(properties) {
     margin-top: 5px;
 }
 
-.example-buttons button {
+.example-btn {
     padding: 5px 10px;
     background-color: #f0f0f0;
     border: 1px solid #ddd;
     border-radius: 3px;
     cursor: pointer;
+    width: auto !important;  /* Override any global button width */
 }
 
-.example-buttons button:hover {
+.example-btn:hover {
     background-color: #e0e0e0;
 }
 

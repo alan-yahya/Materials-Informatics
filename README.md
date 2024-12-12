@@ -1,19 +1,8 @@
 # Orbital Simulations
 
-A flask app exhibiting multiple scientific python libraries for chemistry and materials science informatics. 
+A flask app demonstrating multiple scientific python libraries with cross-talk for chemistry informatics. Intended to complement  a literature-based scientific discovery pipeline (see ChemDataExtractor2.0).
 
-Acts as a demonstration notebook as well as providing boilerplate code for a number of functions and visualisations.
-
-
-A flask deployment of multiple scientific python libraries for material verification and visualisations.
-
-Built to complement a literature-based scientific discovery pipeline.
-
-Built as part of a material science pipeline, using NanoBERT and NanoSearch for the extrraction of relevant information from the literature. To this effect, Molecular structure analysis and MD simulation software is used.
-
-materials science visualisations.
-
-A comprehensive web application for simulating and visualizing various quantum, classical, and materials science phenomena. 
+In this implementation, OpenBabel, ChEMBL and ChemML are used for property retrieval and basic modelling. Further analysis is managed by the MDAnalysis library. 
 
 Built with Flask and modern scientific Python libraries.
 
