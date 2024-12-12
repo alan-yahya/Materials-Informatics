@@ -17,6 +17,26 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+        .info-box {
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+        .info-box h4 {
+            color: #17a2b8;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .info-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .info-box li {
+            margin-bottom: 8px;
+        }
+        .info-box small {
+            color: #666;
+            font-style: italic;
+        }
         .container {
             display: grid;
             grid-template-columns: 300px 1fr;
@@ -90,6 +110,24 @@
 
     <!-- Quantum Orbital Simulation -->
     <div id="quantum-container" class="container" style="display: none;">
+        <div class="info-box" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #17a2b8; border-radius: 4px;">
+            <h4>About This Simulation</h4>
+            <p>This is a simplified visualization of atomic orbitals using the hydrogen-like atom approximation. Important differences from real quantum mechanical calculations:</p>
+            <ul>
+                <li><strong>Approximations Used:</strong> 
+                    Uses single-electron wavefunctions with an effective nuclear charge, ignoring electron-electron interactions and orbital hybridization.
+                </li>
+                <li><strong>Real Quantum Chemistry:</strong> 
+                    Professional quantum chemistry software (like Gaussian or Q-Chem) solves the many-electron Schrödinger equation, 
+                    accounting for electron correlation, exchange effects, and molecular orbital theory.
+                </li>
+                <li><strong>Visualization Limitations:</strong> 
+                    Shows electron density isosurfaces, which are useful for visualization but don't capture the full quantum mechanical wavefunction 
+                    (including phase information and probability currents).
+                </li>
+            </ul>
+            <p><small>This simulation is intended for educational purposes to help visualize the general shape and symmetry of atomic orbitals.</small></p>
+        </div>
         <div class="controls">
             <form id="quantum-form">
                 <div class="form-group">
@@ -110,7 +148,8 @@
                 </div>
                 <div class="form-group">
                     <label>Grid Points:</label>
-                    <input type="number" id="grid-points" value="50" min="20" max="100" step="5">
+                    <input type="number" id="grid-points" value="200" min="50" max="500" step="50">
+                    <small class="form-text text-muted">Higher values give better resolution but take longer to compute (50-500)</small>
                 </div>
                 <div class="form-group">
                     <label>Radius (Å):</label>
