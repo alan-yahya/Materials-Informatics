@@ -32,18 +32,6 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Size X:</label>
-                <input type="number" id="size-x" value="2" min="1" max="5" step="1">
-            </div>
-            <div class="form-group">
-                <label>Size Y:</label>
-                <input type="number" id="size-y" value="2" min="1" max="5" step="1">
-            </div>
-            <div class="form-group">
-                <label>Size Z:</label>
-                <input type="number" id="size-z" value="2" min="1" max="5" step="1">
-            </div>
-            <div class="form-group">
                 <label>Vacuum (Å):</label>
                 <input type="number" id="vacuum" value="10.0" min="5.0" max="20.0" step="1.0">
             </div>
@@ -72,11 +60,6 @@ document.getElementById('ase-form').addEventListener('submit', async (e) => {
     const data = {
         structure_type: document.getElementById('structure-type').value,
         material: document.getElementById('material').value,
-        size: [
-            parseInt(document.getElementById('size-x').value),
-            parseInt(document.getElementById('size-y').value),
-            parseInt(document.getElementById('size-z').value)
-        ],
         vacuum: parseFloat(document.getElementById('vacuum').value),
         temperature: parseFloat(document.getElementById('temperature').value),
         timestep: parseFloat(document.getElementById('timestep').value),

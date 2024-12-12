@@ -12,10 +12,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 class AtomisticSimulation:
-    def __init__(self, structure_type='bulk', material='Cu', size=(2,2,2), vacuum=10.0):
+    def __init__(self, structure_type='bulk', material='Cu', vacuum=10.0):
         self.structure_type = structure_type
         self.material = material
-        self.size = size
         self.vacuum = vacuum
         self.atoms = None
         self.trajectory = []
@@ -25,14 +24,14 @@ class AtomisticSimulation:
     def create_structure(self):
         """Create atomic structure based on type."""
         if self.structure_type == 'bulk':
-            self.atoms = bulk(self.material) * self.size
+            self.atoms = bulk(self.material) * (2, 2, 2)
         elif self.structure_type == 'surface':
-            slab = surface(self.material, (1,1,1), self.size[0])
+            slab = surface(self.material, (1,1,1), 3)
             slab.center(vacuum=self.vacuum, axis=2)
             self.atoms = slab
         elif self.structure_type == 'nanoparticle':
-            # Create a simple cubic nanoparticle
-            atoms = bulk(self.material, cubic=True) * self.size
+            # Create a simple cubic nanoparticle with fixed size
+            atoms = bulk(self.material, cubic=True) * (3, 3, 3)
             atoms.center(vacuum=self.vacuum)
             self.atoms = atoms
         elif self.structure_type == 'molecule':
@@ -143,17 +142,16 @@ def create_visualization(trajectory, energies, temperatures, atoms):
     
     return fig
 
-def run_ase_simulation(structure_type='bulk', material='Cu', size=(2,2,2),
+def run_ase_simulation(structure_type='bulk', material='Cu',
                       vacuum=10.0, temperature=300, timestep=1.0, steps=100):
     """Run atomistic simulation using ASE."""
     try:
         print(f"Starting ASE simulation with parameters: structure_type={structure_type}, material={material}")
         
-        # Initialize simulation
+        # Initialize simulation with fixed size
         sim = AtomisticSimulation(
             structure_type=structure_type,
             material=material,
-            size=size,
             vacuum=vacuum
         )
         

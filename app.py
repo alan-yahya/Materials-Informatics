@@ -159,19 +159,17 @@ def ase():
         # Get simulation parameters
         structure_type = data.get('structure_type', 'bulk')
         material = data.get('material', 'Cu')
-        size = tuple(data.get('size', [2, 2, 2]))
         vacuum = float(data.get('vacuum', 10.0))
         temperature = float(data.get('temperature', 300))
         timestep = float(data.get('timestep', 1.0))
         steps = int(data.get('steps', 100))
         
-        print(f"Parameters: structure_type={structure_type}, material={material}, size={size}")
+        print(f"Parameters: structure_type={structure_type}, material={material}")
         
         # Run simulation
         fig = run_ase_simulation(
             structure_type=structure_type,
             material=material,
-            size=size,
             vacuum=vacuum,
             temperature=temperature,
             timestep=timestep,
