@@ -462,4 +462,10 @@ def molecule_api():
         }), 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Development server
+    app.run(host='0.0.0.0', port=5000, debug=True)
+else:
+    # Production server (gunicorn)
+    # Configure any production-specific settings
+    app.config['DEBUG'] = False
+    app.config['TEMPLATES_AUTO_RELOAD'] = False
