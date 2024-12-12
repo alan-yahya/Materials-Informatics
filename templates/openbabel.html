@@ -206,7 +206,7 @@ textarea {
 }
 
 .download-button {
-    background-color: #4CAF50;
+    background-color: #2196F3;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -217,7 +217,7 @@ textarea {
 }
 
 .download-button:hover {
-    background-color: #45a049;
+    background-color: #1976D2;
 }
 
 .checkbox-group {
@@ -264,6 +264,8 @@ textarea {
 </style>
 
 <script>
+let currentPDBData = null;  // Store the current PDB data
+
 function updateInputField() {
     const format = document.getElementById('input-format').value;
     
@@ -350,6 +352,13 @@ document.getElementById('openbabel-form').addEventListener('submit', async (e) =
         // Show/hide download button based on PDB data availability
         document.getElementById('download-section').style.display = 
             currentPDBData ? 'block' : 'none';
+        
+        // Add click handler for download button
+        document.getElementById('download-pdb').onclick = function() {
+            if (currentPDBData) {
+                downloadPDB(currentPDBData);
+            }
+        };
         
         if (result.plot) {
             const plotData = JSON.parse(result.plot);

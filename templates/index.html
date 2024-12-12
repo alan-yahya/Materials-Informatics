@@ -81,11 +81,11 @@
     <div class="tabs">
         <button class="tab-button" onclick="showTab('openbabel')">OpenBabel</button>
         <button class="tab-button" onclick="showTab('mdanalysis')">MDAnalysis</button>
+        <button class="tab-button" onclick="showTab('chembl')">ChEMBL Lookup</button>
         <button class="tab-button" onclick="showTab('quantum')">Quantum</button>
         <button class="tab-button" onclick="showTab('ase')">ASE (Atomic Simulation Environment)</button>
         <button class="tab-button" onclick="showTab('pymatgen')">Pymatgen</button>
         <button class="tab-button" onclick="showTab('chemml')">ChemML</button>
-        <button class="tab-button" onclick="showTab('chembl')">ChEMBL Lookup</button>
     </div>
 
     <!-- Quantum Orbital Simulation -->
@@ -492,6 +492,18 @@
                 console.error('Error running QuTiP simulation:', error);
             }
         });
+
+        function downloadPDB(pdbData, filename = 'structure.pdb') {
+            const blob = new Blob([pdbData], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html> 
