@@ -1,151 +1,48 @@
 <!-- MDAnalysis -->
 <div id="mdanalysis-container" class="container" style="display: none;">
     <div class="controls">
-        <form id="mdanalysis-form">
+        <form id="mdanalysis-form" enctype="multipart/form-data">
             <div class="form-group">
-                <label>Input Method:</label>
-                <select id="input-method" onchange="toggleInputMethod()">
-                    <option value="file">Upload PDB File</option>
-                    <option value="text">Paste PDB Text</option>
-                </select>
+                <label>Upload PDB File:</label>
+                <input type="file" id="mdanalysis-file" name="file" accept=".pdb" required>
             </div>
-
-            <div class="form-group" id="file-input-section">
-                <label>PDB File:</label>
-                <input type="file" id="pdb-file" accept=".pdb">
-                <p class="description">Upload a PDB file containing molecular structure</p>
-            </div>
-            
-            <div class="form-group" id="text-input-section" style="display: none;">
-                <label>PDB Data:</label>
-                <textarea id="topology-data" rows="10" placeholder="Paste PDB file content here..."></textarea>
-                <p class="description">Paste the contents of a PDB file</p>
-            </div>
-            
-            <div class="form-group">
-                <label>Analysis Type:</label>
-                <select id="analysis-type">
-                    <option value="structure">Structure Analysis</option>
-                    <option value="contacts">Contact Analysis</option>
-                    <option value="rmsd">RMSD Analysis</option>
-                    <option value="rdf">Radial Distribution Function</option>
-                    <option value="density">Density Analysis</option>
-                </select>
-                <p class="description">
-                    Structure Analysis: Basic structural properties and statistics<br>
-                    Contact Analysis: Atomic contacts and interactions<br>
-                    RMSD Analysis: Root Mean Square Deviation over time<br>
-                    RDF: Radial distribution function between atom groups<br>
-                    Density Analysis: Spatial density distribution
-                </p>
-            </div>
-            
-            <div class="form-group">
-                <label>Selection:</label>
-                <input type="text" id="selection" value="all" placeholder="MDAnalysis selection string">
-                <p class="description">
-                    Examples:<br>
-                    "protein" - Select protein atoms<br>
-                    "name CA" - Select alpha carbons<br>
-                    "resname SOL" - Select water molecules<br>
-                    "all" - Select everything
-                </p>
-            </div>
-            
-            <button type="submit">Run Analysis</button>
+            <button type="submit">Analyze Structure</button>
         </form>
+        <div id="mdanalysis-results" style="margin-top: 20px; white-space: pre-wrap;"></div>
     </div>
     <div id="mdanalysis-plot" class="plot"></div>
 </div>
 
-<style>
-.description {
-    font-size: 0.9em;
-    color: #666;
-    margin-top: 5px;
-    margin-bottom: 15px;
-    padding-left: 10px;
-    border-left: 3px solid #ddd;
-}
-
-textarea {
-    width: 100%;
-    font-family: monospace;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-}
-
-input[type="file"] {
-    padding: 10px;
-    border: 1px dashed #ddd;
-    border-radius: 3px;
-    width: 100%;
-    margin-bottom: 5px;
-}
-</style>
-
 <script>
-function toggleInputMethod() {
-    const method = document.getElementById('input-method').value;
-    document.getElementById('file-input-section').style.display = 
-        method === 'file' ? 'block' : 'none';
-    document.getElementById('text-input-section').style.display = 
-        method === 'text' ? 'block' : 'none';
-}
-
 document.getElementById('mdanalysis-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    let topology_data = '';
-    const inputMethod = document.getElementById('input-method').value;
-    
-    if (inputMethod === 'file') {
-        const fileInput = document.getElementById('pdb-file');
-        if (!fileInput.files[0]) {
-            alert('Please select a PDB file');
-            return;
-        }
-        topology_data = await fileInput.files[0].text();
-    } else {
-        topology_data = document.getElementById('topology-data').value;
-        if (!topology_data.trim()) {
-            alert('Please enter PDB data');
-            return;
-        }
-    }
-
-    const data = {
-        topology_format: 'pdb',
-        topology_data: topology_data,
-        trajectory_format: 'none',
-        trajectory_data: '',
-        analysis_type: document.getElementById('analysis-type').value,
-        selection: document.getElementById('selection').value
-    };
+    const formData = new FormData();
+    const fileInput = document.getElementById('mdanalysis-file');
+    formData.append('file', fileInput.files[0]);
 
     try {
         const response = await fetch('/mdanalysis', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
+            body: formData
         });
 
         const result = await response.json();
+        
         if (result.error) {
-            console.error('MDAnalysis error:', result.error);
-            alert('Analysis error: ' + result.error);
+            document.getElementById('mdanalysis-results').innerHTML = `Error: ${result.error}`;
             return;
         }
-        const plotData = JSON.parse(result.plot);
-        Plotly.newPlot('mdanalysis-plot', plotData.data, plotData.layout);
+
+        // Display the analysis results
+        document.getElementById('mdanalysis-results').innerHTML = result.results;
+        
+        // Clear the file input
+        fileInput.value = '';
+        
     } catch (error) {
-        console.error('Error running MDAnalysis:', error);
-        alert('Error running analysis. Please check the console for details.');
+        console.error('Error in MDAnalysis:', error);
+        document.getElementById('mdanalysis-results').innerHTML = `Error: ${error.message}`;
     }
 });
-
-// Initialize input method visibility
-toggleInputMethod();</script> 
+</script> 

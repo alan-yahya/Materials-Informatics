@@ -16,9 +16,15 @@ from ase_simulation import run_ase_simulation
 from pymatgen_analysis import run_pymatgen_analysis
 from chemml_analysis import run_chemml_analysis
 from openbabel_analysis import run_openbabel_analysis, compare_molecules, analyze_reaction
-from mdanalysis_simulation import run_mdanalysis
+from mdanalysis_simulation import run_basic_analysis
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
 def index():
@@ -328,29 +334,62 @@ def openbabel():
 
 @app.route('/mdanalysis', methods=['POST'])
 def mdanalysis():
+    temp_file = None
     try:
-        data = request.get_json()
-        print("Received MDAnalysis request with data:", data)
+        # Check if a file was uploaded
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
         
-        # Extract parameters from data
-        params = {
-            'topology_data': data.get('topology_data'),
-            'trajectory_data': data.get('trajectory_data'),
-            'analysis_type': data.get('analysis_type', 'structure'),
-            'selection': data.get('selection', 'all'),
-            'topology_format': data.get('topology_format', 'pdb'),
-            'trajectory_format': data.get('trajectory_format', 'none')
-        }
+        file = request.files['file']
         
-        if not params['topology_data']:
-            raise ValueError("No topology data provided")
+        # Check if a file was selected
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if file and file.filename.endswith('.pdb'):
+            # Secure the filename and save the file
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             
-        # Run analysis
-        fig = run_mdanalysis(**params)
+            try:
+                # Save the uploaded file
+                file.save(filepath)
+                temp_file = filepath  # Store filepath for cleanup
+                
+                # Redirect stdout to capture print statements
+                import io
+                import sys
+                output = io.StringIO()
+                sys.stdout = output
+                
+                # Run the analysis
+                run_basic_analysis(filepath)
+                
+                # Restore stdout and get the captured output
+                sys.stdout = sys.__stdout__
+                analysis_results = output.getvalue()
+                
+                return jsonify({
+                    'success': True,
+                    'results': analysis_results
+                })
+                
+            finally:
+                # Clean up the uploaded file
+                if temp_file and os.path.exists(temp_file):
+                    try:
+                        file.close()
+                        # Close any open file handles
+                        import psutil
+                        process = psutil.Process()
+                        for handler in process.open_files():
+                            if handler.path == temp_file:
+                                os.close(handler.fd)
+                        os.remove(temp_file)
+                    except Exception as e:
+                        print(f"Warning: Could not remove temporary file: {str(e)}")
         
-        return jsonify({
-            'plot': json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        })
+        return jsonify({'error': 'Invalid file type'}), 400
         
     except Exception as e:
         print(f"Error in MDAnalysis: {str(e)}")

@@ -1,0 +1,22 @@
+<div id="chembl-container" class="container" style="display: none;">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="controls">
+                <form id="chembl-search-form" class="mb-3">
+                    <div class="form-group">
+                        <label for="smiles-input">SMILES String:</label>
+                        <input type="text" id="smiles-input" class="form-control" 
+                               placeholder="Enter SMILES string (e.g., CCO)" required>
+                        <small class="form-text text-muted">Example SMILES: CCO (ethanol), c1ccccc1 (benzene)</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3 w-100">Search ChEMBL</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div id="chembl-results" class="mt-4">
+                <!-- Results will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+</div> 
