@@ -281,19 +281,16 @@ def chemml():
         data = request.get_json()
         print("Received ChemML request with data:", data)
         
-        # Get analysis parameters
-        analysis_type = data.get('analysis_type', 'training')
-        
-        # Run analysis
-        fig = run_chemml_analysis(analysis_type, **data)
+        # Run analysis with data directly
+        result = run_chemml_analysis(**data)
         
         response = {
-            'plot': json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            'plot': json.dumps(result['plot'], cls=plotly.utils.PlotlyJSONEncoder)
         }
         
         # Add molecular descriptors if available
-        if hasattr(fig, 'descriptors'):
-            response['descriptors'] = fig.descriptors
+        if result['properties']:
+            response['properties'] = result['properties']
         
         return jsonify(response)
         

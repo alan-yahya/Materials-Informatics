@@ -1,5 +1,10 @@
 # Orbital Simulations
 
+A flask app exhibiting multiple scientific python libraries for chemistry and materials science informatics. 
+
+Acts as a demonstration notebook as well as providing boilerplate code for a number of functions and visualisations.
+
+
 A flask deployment of multiple scientific python libraries for material verification and visualisations.
 
 Built to complement a literature-based scientific discovery pipeline.
