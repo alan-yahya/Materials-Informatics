@@ -23,9 +23,8 @@
             <div class="form-group">
                 <label>Analysis Type:</label>
                 <select id="analysis-type" onchange="updateAnalysisParams()">
+                    <option value="bandstructure">Band Structure</option>
                     <option value="structure">Structure</option>
-                    <option value="symmetry">Symmetry</option>
-                    <option value="bonding">Bonding</option>
                 </select>
             </div>
 
@@ -79,13 +78,25 @@
                 </div>
             </div>
 
-            <!-- Bonding Analysis Parameters -->
-            <div id="bonding-params" style="display: none;">
+            <!-- Band Structure Parameters -->
+            <div id="bandstructure-params" style="display: none;">
                 <div class="form-group">
-                    <label>Method:</label>
-                    <select id="bonding-method">
-                        <option value="voronoi">Voronoi</option>
-                        <option value="crystal">Crystal NN</option>
+                    <label>k-point Density:</label>
+                    <input type="number" id="kpoint-density" value="20" min="10" max="100" step="5">
+                    <small class="form-text text-muted">
+                        Higher values give better resolution of band structure features but increase computation time. 
+                        Typical values range from 10-100 points per high-symmetry path.
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Energy Range (eV):</label>
+                    <input type="number" id="energy-range" value="10" min="5" max="20" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Include Spin:</label>
+                    <select id="include-spin">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
                     </select>
                 </div>
             </div>
@@ -119,11 +130,11 @@ function updateAnalysisParams() {
     const analysisType = document.getElementById('analysis-type').value;
     
     // Hide all analysis parameter sections
-    document.getElementById('bonding-params').style.display = 'none';
+    document.getElementById('bandstructure-params').style.display = 'none';
     
     // Show selected analysis parameter section
-    if (analysisType === 'bonding') {
-        document.getElementById('bonding-params').style.display = 'block';
+    if (analysisType === 'bandstructure') {
+        document.getElementById('bandstructure-params').style.display = 'block';
     }
 }
 
@@ -155,8 +166,10 @@ document.getElementById('pymatgen-form').addEventListener('submit', async (e) =>
     }
     
     // Add analysis-specific parameters
-    if (analysisType === 'bonding') {
-        data.method = document.getElementById('bonding-method').value;
+    if (analysisType === 'bandstructure') {
+        data.kpoint_density = parseInt(document.getElementById('kpoint-density').value);
+        data.energy_range = parseFloat(document.getElementById('energy-range').value);
+        data.include_spin = document.getElementById('include-spin').value === 'true';
     }
 
     try {

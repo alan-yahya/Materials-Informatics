@@ -1,6 +1,8 @@
 # Orbital Simulations
 
-A flask app demonstrating multiple scientific python libraries with cross-talk for chemistry informatics. Intended to complement  a literature-based scientific discovery pipeline (see ChemDataExtractor2.0).
+In order to cross-validate data from literature mining methods, it is important to have access to a robust suite of simulation/screening tools.
+
+To this end, this flask app demonstrates multiple scientific python libraries with cross-talk for materials/cheminformatics.
 
 In this implementation, OpenBabel, ChEMBL and ChemML are used for property retrieval and basic modelling. Further analysis is managed by the MDAnalysis library. 
 

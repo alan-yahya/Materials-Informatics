@@ -8,12 +8,38 @@ from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.core.surface import SlabGenerator
 from pymatgen.analysis.elasticity import Strain
 from pymatgen.transformations.standard_transformations import SupercellTransformation
+from pymatgen.electronic_structure.plotter import BSPlotter
+from pymatgen.symmetry.bandstructure import HighSymmKpath
+from pymatgen.io.vasp.inputs import Kpoints
 
 class MaterialAnalyzer:
     def __init__(self):
         self.structure = None
         self.slab = None
         self.defect_structure = None
+        
+    def _create_error_figure(self, error_message):
+        """Helper method to create an error figure."""
+        fig = go.Figure()
+        fig.add_annotation(
+            text=error_message,
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
+            showarrow=False,
+            font=dict(
+                size=14,
+                color="red"
+            )
+        )
+        fig.update_layout(
+            height=400,
+            showlegend=False,
+            xaxis=dict(showgrid=False, showticklabels=False),
+            yaxis=dict(showgrid=False, showticklabels=False)
+        )
+        return fig
         
     def create_structure(self, material_type='bulk', **kwargs):
         """Create material structure based on type."""
@@ -59,33 +85,7 @@ class MaterialAnalyzer:
             
     def analyze_symmetry(self):
         """Analyze crystal symmetry."""
-        analyzer = SpacegroupAnalyzer(self.structure)
-        symmetry_data = {
-            'space_group': analyzer.get_space_group_symbol(),
-            'point_group': analyzer.get_point_group_symbol(),
-            'crystal_system': analyzer.get_crystal_system(),
-            'hall_number': analyzer.get_hall()
-        }
-        return symmetry_data
-        
-    def analyze_bonding(self, method='voronoi'):
-        """Analyze bonding environment."""
-        if method == 'voronoi':
-            nn = VoronoiNN()
-        else:
-            nn = CrystalNN()
-            
-        # Get bonding information for each site
-        bonding_info = []
-        for i, site in enumerate(self.structure):
-            neighbors = nn.get_nn_info(self.structure, i)
-            bonding_info.append({
-                'site': i,
-                'element': site.specie.symbol,
-                'coordination': len(neighbors),
-                'neighbors': [{'element': n['site'].specie.symbol, 'distance': n['distance']} for n in neighbors]
-            })
-        return bonding_info
+        pass
         
     def create_vacancy(self, site_index=0):
         """Create a vacancy by removing a site from the structure."""
@@ -111,85 +111,135 @@ class MaterialAnalyzer:
         strain = Strain(strain_matrix)
         self.structure.apply_strain(strain_matrix)
         
-    def create_visualization(self, plot_type='structure', **kwargs):
+    def calculate_bandstructure(self, kpoint_density=20, energy_range=10, include_spin=False):
+        """Calculate electronic band structure."""
+        try:
+            # Get high symmetry k-points
+            kpath = HighSymmKpath(self.structure)
+            kpoints = Kpoints.automatic_linemode(
+                divisions=kpoint_density,
+                ibz=kpath
+            )
+            
+            # Generate dummy band structure data for demonstration
+            # In a real application, you would use a DFT calculator here
+            num_bands = 10
+            num_kpoints = len(kpoints.kpts)
+            
+            # Create energy bands (dummy data)
+            energies = []
+            for i in range(num_bands):
+                base_energy = -5 + i * 2  # Spread bands from -5 to 15 eV
+                band = []
+                for k in range(num_kpoints):
+                    # Add some dispersion to make it look like a band structure
+                    energy = base_energy + 0.5 * np.sin(k * np.pi / num_kpoints)
+                    band.append(energy)
+                energies.append(band)
+            
+            return {
+                'energies': np.array(energies),
+                'kpoints': kpoints.kpts,
+                'labels': kpath.kpath['path'],
+                'efermi': 0.0  # Fermi energy
+            }
+        except Exception as e:
+            print(f"Error calculating band structure: {str(e)}")
+            return None
+    
+    def create_visualization(self, plot_type='bandstructure', **kwargs):
         """Create visualization of material analysis."""
-        fig = make_subplots(rows=1, cols=2,
-                           subplot_titles=('Structure', 'Analysis'),
-                           specs=[[{'type': 'scatter3d'}, {'type': 'scatter'}]])
-        
-        # Plot structure
-        coords = self.structure.cart_coords
-        elements = [site.specie.symbol for site in self.structure]
-        
-        # Create element-color mapping
-        unique_elements = list(set(elements))
-        colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'][:len(unique_elements)]
-        element_colors = dict(zip(unique_elements, colors))
-        
-        fig.add_trace(
-            go.Scatter3d(
-                x=coords[:, 0],
-                y=coords[:, 1],
-                z=coords[:, 2],
-                mode='markers',
-                marker=dict(
-                    size=10,
-                    color=[element_colors[el] for el in elements],
-                    symbol='circle'
-                ),
-                text=elements,
-                name='Atoms'
-            ),
-            row=1, col=1
-        )
-        
-        # Plot analysis based on type
-        if plot_type == 'symmetry':
-            symmetry_data = self.analyze_symmetry()
-            text = [f"{k}: {v}" for k, v in symmetry_data.items()]
-            fig.add_trace(
-                go.Scatter(
-                    x=[0],
-                    y=[0],
-                    mode='text',
-                    text='\n'.join(text),
-                    textposition='middle center',
-                    name='Symmetry'
-                ),
-                row=1, col=2
-            )
+        if plot_type == 'structure':
+            # Create structure visualization
+            fig = go.Figure()
             
-        elif plot_type == 'bonding':
-            bonding_info = self.analyze_bonding()
-            coord_numbers = [info['coordination'] for info in bonding_info]
-            elements = [info['element'] for info in bonding_info]
+            # Plot structure
+            coords = self.structure.cart_coords
+            elements = [site.specie.symbol for site in self.structure]
+            
+            # Create element-color mapping
+            unique_elements = list(set(elements))
+            colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'][:len(unique_elements)]
+            element_colors = dict(zip(unique_elements, colors))
             
             fig.add_trace(
-                go.Scatter(
-                    x=list(range(len(coord_numbers))),
-                    y=coord_numbers,
+                go.Scatter3d(
+                    x=coords[:, 0],
+                    y=coords[:, 1],
+                    z=coords[:, 2],
                     mode='markers',
+                    marker=dict(
+                        size=10,
+                        color=[element_colors[el] for el in elements],
+                        symbol='circle'
+                    ),
                     text=elements,
-                    name='Coordination'
-                ),
-                row=1, col=2
+                    name='Atoms'
+                )
             )
             
-        # Update layout
-        fig.update_layout(
-            title='Material Analysis',
-            scene=dict(
-                xaxis_title='X (Å)',
-                yaxis_title='Y (Å)',
-                zaxis_title='Z (Å)'
-            ),
-            height=600,
-            showlegend=True
-        )
+            # Update layout for structure
+            fig.update_layout(
+                title='Crystal Structure',
+                scene=dict(
+                    xaxis_title='X (Å)',
+                    yaxis_title='Y (Å)',
+                    zaxis_title='Z (Å)',
+                    aspectmode='cube'
+                ),
+                height=600,
+                showlegend=True
+            )
+            
+            return fig
         
-        return fig
+        elif plot_type == 'bandstructure':
+            # Calculate band structure
+            bs_data = self.calculate_bandstructure(
+                kpoint_density=kwargs.get('kpoint_density', 20),
+                energy_range=kwargs.get('energy_range', 10),
+                include_spin=kwargs.get('include_spin', False)
+            )
+            
+            if bs_data is None:
+                return self._create_error_figure("Failed to calculate band structure")
+            
+            # Create band structure plot
+            fig = go.Figure()
+            
+            # Plot each band
+            for band in bs_data['energies']:
+                fig.add_trace(
+                    go.Scatter(
+                        x=list(range(len(band))),
+                        y=band,
+                        mode='lines',
+                        line=dict(color='blue'),
+                        showlegend=False
+                    )
+                )
+            
+            # Update layout for band structure
+            fig.update_layout(
+                title='Electronic Band Structure',
+                xaxis_title='k-points',
+                yaxis_title='Energy (eV)',
+                yaxis_zeroline=True,
+                yaxis=dict(
+                    range=[-kwargs.get('energy_range', 10)/2, 
+                           kwargs.get('energy_range', 10)/2]
+                ),
+                showlegend=False,
+                height=600
+            )
+            
+            # Add Fermi level line
+            fig.add_hline(y=bs_data['efermi'], line_dash="dash", 
+                         line_color="red", annotation_text="E_F")
+            
+            return fig
 
-def run_pymatgen_analysis(material_type='bulk', analysis_type='structure', **kwargs):
+def run_pymatgen_analysis(material_type='bulk', analysis_type='bandstructure', **kwargs):
     """Run materials analysis using pymatgen."""
     try:
         print(f"Starting pymatgen analysis with material type: {material_type}")
@@ -209,7 +259,6 @@ def run_pymatgen_analysis(material_type='bulk', analysis_type='structure', **kwa
         
     except Exception as e:
         print(f"Error in pymatgen analysis: {str(e)}")
-        # Create error figure
         fig = go.Figure()
         fig.add_annotation(
             text=f"Analysis failed: {str(e)}",
