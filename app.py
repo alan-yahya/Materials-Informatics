@@ -6,11 +6,6 @@ from quantum_orbitals import (
     create_atom, calculate_orbital_wavefunction, plot_orbital_density,
     get_available_atoms, get_available_basis_sets
 )
-from battery_simulation import run_battery_simulation
-from double_slit import run_double_slit_simulation
-from semiclassical import run_semiclassical_simulation
-from pic_simulation import run_pic_simulation
-from shape_optimization import run_shape_optimization
 from qutip_simulation import run_qutip_simulation
 from ase_simulation import run_ase_simulation
 from pymatgen_analysis import run_pymatgen_analysis
@@ -151,106 +146,6 @@ def quantum_orbital():
     
     # Create visualization
     fig = plot_orbital_density(x, y, z, density, isovalue)
-    
-    return jsonify({
-        'plot': fig.to_json()
-    })
-
-@app.route('/double_slit', methods=['POST'])
-def double_slit():
-    data = request.get_json()
-    
-    # Get simulation parameters
-    slit_width = float(data.get('slit_width', 10))
-    slit_separation = float(data.get('slit_separation', 30))
-    wavelength = float(data.get('wavelength', 500e-9))
-    
-    # Run simulation
-    fig = run_double_slit_simulation(
-        slit_width=slit_width,
-        slit_separation=slit_separation,
-        wavelength=wavelength
-    )
-    
-    return jsonify({
-        'plot': fig.to_json()
-    })
-
-@app.route('/battery', methods=['POST'])
-def battery():
-    data = request.get_json()
-    
-    # Get simulation parameters
-    initial_capacity = float(data.get('initial_capacity', 900))  # mAh/g
-    cycles = int(data.get('cycles', 100))
-    
-    # Run simulation
-    fig = run_battery_simulation(
-        initial_capacity=initial_capacity,
-        cycles=cycles
-    )
-    
-    return jsonify({
-        'plot': fig.to_json()
-    })
-
-@app.route('/semiclassical', methods=['POST'])
-def semiclassical():
-    data = request.get_json()
-    
-    # Get simulation parameters
-    mass = float(data.get('mass', 9.1093837015e-31))  # electron mass in kg
-    energy = float(data.get('energy', 1.0))  # energy in eV
-    potential_type = data.get('potential_type', 'barrier')
-    
-    # Run simulation
-    fig = run_semiclassical_simulation(
-        mass=mass,
-        energy=energy,
-        potential_type=potential_type
-    )
-    
-    return jsonify({
-        'plot': fig.to_json()
-    })
-
-@app.route('/pic', methods=['POST'])
-def pic():
-    data = request.get_json()
-    
-    # Get simulation parameters
-    n_particles = int(data.get('n_particles', 1000))
-    n_steps = int(data.get('n_steps', 100))
-    nx = int(data.get('nx', 100))
-    ny = int(data.get('ny', 100))
-    dt = float(data.get('dt', 1e-12))
-    
-    # Run simulation
-    fig = run_pic_simulation(
-        n_particles=n_particles,
-        n_steps=n_steps,
-        nx=nx,
-        ny=ny,
-        dt=dt
-    )
-    
-    return jsonify({
-        'plot': fig.to_json()
-    })
-
-@app.route('/optimize_shape', methods=['POST'])
-def optimize_shape():
-    data = request.get_json()
-    
-    # Get optimization parameters
-    n_points = int(data.get('resolution', 50))  # Using resolution as n_points
-    max_iter = int(data.get('max_iter', 50))
-    
-    # Run optimization
-    fig = run_shape_optimization(
-        n_points=n_points,
-        max_iter=max_iter
-    )
     
     return jsonify({
         'plot': fig.to_json()
