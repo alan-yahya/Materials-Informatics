@@ -433,7 +433,7 @@ def chembl():
             # Perform SMILES lookup
             results = molecule_identifier.get_chembl_ids_from_smiles(smiles)
     
-    return render_template('chembl.html', results=results, smiles=smiles)
+    return render_template('chembl.html', results=results, smiles=smiles, embedded=request.args.get('embedded', False))
 
 @app.route('/api/molecule', methods=['GET'])
 def molecule_api():

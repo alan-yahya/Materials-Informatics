@@ -158,6 +158,10 @@
                 <div class="form-group">
                     <label>Isosurface Value:</label>
                     <input type="number" id="isovalue" value="0.01" min="0.001" max="0.1" step="0.001">
+                    <small class="form-text text-muted">
+                        Controls the electron density threshold for the 3D visualization. Lower values (e.g., 0.001) show more diffuse regions of the orbital, 
+                        while higher values (e.g., 0.1) show only regions of high electron density. Typical values range from 0.001 to 0.1.
+                    </small>
                 </div>
                 <button type="submit">Calculate Quantum Orbital</button>
             </form>
@@ -311,17 +315,22 @@
 
     <!-- ChEMBL Lookup -->
     <div id="chembl-container" class="container" style="display: none;">
+        <div class="info-box" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #17a2b8; border-radius: 4px;">
+            <h4>About ChEMBL</h4>
+            <p>ChEMBL is a database of bioactive molecules with drug-like properties.</p>
+            <ul>
+                <li><strong>Features:</strong> Access to extensive bioactivity data, drug-like molecule properties, and clinical trial information</li>
+                <li><strong>Limitations:</strong> Data may be incomplete or have varying quality levels, focuses primarily on drug-like compounds</li>
+                <li><strong>Best For:</strong> Drug discovery research, understanding molecule properties and biological activities</li>
+            </ul>
+        </div>
         <iframe src="/chembl" style="width: 100%; height: 800px; border: none;"></iframe>
     </div>
 
     {% include 'ase.html' %}
-
     {% include 'pymatgen.html' %}
-
     {% include 'chemml.html' %}
-
     {% include 'openbabel.html' %}
-    
     {% include 'mdanalysis.html' %}
 
     <script>
