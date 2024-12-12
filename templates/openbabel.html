@@ -85,11 +85,16 @@
 
             <button type="submit">Analyze Structure</button>
         </form>
-        <div id="download-section" style="display: none; margin-top: 20px;">
-            <button id="download-pdb" class="download-button">Download Structure (PDB)</button>
+        
+        <!-- Add a results section that's hidden by default -->
+        <div id="structure-results" style="display: none; margin-top: 20px;">
+            <h4>Structure Analysis Results</h4>
+            <div id="download-section" style="margin-top: 10px;">
+                <button id="download-pdb" class="download-button">Download Structure (PDB)</button>
+            </div>
+            <div id="openbabel-plot" class="plot"></div>
         </div>
     </div>
-    <div id="openbabel-plot" class="plot"></div>
 
     <!-- Molecular Similarity Section -->
     <div class="similarity-section" style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
@@ -383,16 +388,12 @@ document.getElementById('openbabel-form').addEventListener('submit', async (e) =
         // Store PDB data
         currentPDBData = result.pdb_data;
         
+        // Show results section
+        document.getElementById('structure-results').style.display = 'block';
+        
         // Show/hide download button based on PDB data availability
         document.getElementById('download-section').style.display = 
             currentPDBData ? 'block' : 'none';
-        
-        // Add click handler for download button
-        document.getElementById('download-pdb').onclick = function() {
-            if (currentPDBData) {
-                downloadPDB(currentPDBData);
-            }
-        };
         
         if (result.plot) {
             const plotData = JSON.parse(result.plot);
