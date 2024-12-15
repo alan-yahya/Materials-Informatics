@@ -93,7 +93,7 @@ http://localhost:5000
 
 ## Dependencies
 
-### Core Libraries
+### Libraries
 - Flask: Web framework
 - Plotly: Interactive visualizations
 - NumPy/SciPy: Scientific computing
@@ -102,19 +102,8 @@ http://localhost:5000
 - MDAnalysis: Molecular analysis
 - ASE: Atomic simulations
 - Pymatgen: Materials analysis
-
-### Additional Tools
 - RDKit: Cheminformatics
 - scikit-learn: Machine learning
-- pandas: Data manipulation
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create pull request
 
 ## License
 
